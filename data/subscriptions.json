@@ -1,0 +1,32 @@
+[
+  {
+    "id": "032e71c4-81e8-4615-8103-fffebecd4bfa",
+    "user_id": "12912be5-89d7-45fc-a43b-19c807a44e3c",
+    "service_name": "Netflix",
+    "price": 15.99,
+    "currency": "CNY",
+    "billing_cycle": "monthly",
+    "category": "entertainment",
+    "status": "active"
+  },
+  {
+    "id": "ce1e6f8e-94a3-4cba-a876-a1a105c7f971",
+    "user_id": "12912be5-89d7-45fc-a43b-19c807a44e3c",
+    "service_name": "ChatGPT Plus",
+    "price": 140.0,
+    "currency": "CNY",
+    "billing_cycle": "monthly",
+    "category": "productivity",
+    "status": "active"
+  },
+  {
+    "id": "0f20cff9-bfda-4fd1-9d6d-34166a986f8b",
+    "user_id": "12912be5-89d7-45fc-a43b-19c807a44e3c",
+    "service_name": "Spotify",
+    "price": 9.99,
+    "currency": "CNY",
+    "billing_cycle": "monthly",
+    "category": "entertainment",
+    "status": "active"
+  }
+]

@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     upload_allowed_extensions: str = Field(default=".jpg,.jpeg,.png,.pdf", env="UPLOAD_ALLOWED_EXTENSIONS")
     storage_backend: str = Field(default="local", env="STORAGE_BACKEND")
 
+    # Data Storage Backend
+    data_storage_backend: str = Field(default="json", env="DATA_STORAGE_BACKEND")  # json|sqlite|postgresql
+
     # Paths
     @property
     def project_root(self) -> Path:
