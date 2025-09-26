@@ -6,12 +6,14 @@ import streamlit as st
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
+import asyncio
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from core.database.data_interface import data_manager
+from core.ai import get_ai_assistant, is_ai_assistant_available
 from app.constants import CATEGORY_ICONS
 
 def render_welcome_section():
@@ -161,7 +163,7 @@ def render_quick_actions():
             st.rerun()
 
 def render_insights_preview():
-    """渲染洞察预览"""
+    """渲染智能洞察预览"""
     if not st.session_state.current_user_id:
         return
 
@@ -171,13 +173,59 @@ def render_insights_preview():
     if not user_overview:
         return
 
+    # 尝试使用AI生成洞察
+    insights = []
+    ai_generated = False
+
+    if is_ai_assistant_available():
+        try:
+            with st.spinner("🤖 AI正在分析您的订阅数据..."):
+                ai_assistant = get_ai_assistant()
+                # 同步调用（在Streamlit中更稳定）
+                insights = asyncio.run(ai_assistant.generate_insights(user_overview))
+                ai_generated = True
+        except Exception as e:
+            st.caption(f"AI分析暂时不可用，使用默认分析: {str(e)}")
+
+    # 如果AI不可用或失败，使用默认洞察
+    if not insights:
+        insights = generate_default_insights(user_overview)
+
+    # 显示洞察来源
+    if ai_generated:
+        st.caption("🤖 以下洞察由AI智能分析生成")
+    else:
+        st.caption("📊 基于规则分析生成")
+
+    # 显示洞察
+    if insights:
+        for insight in insights[:3]:  # 只显示前3个洞察
+            icon = insight.get("icon", "💡")
+            title = insight.get("title", "洞察")
+            content = insight.get("content", "")
+
+            insight_type = insight.get("type", "info")
+            if insight_type == "warning":
+                st.warning(f"{icon} **{title}**\n\n{content}")
+            elif insight_type == "success":
+                st.success(f"{icon} **{title}**\n\n{content}")
+            else:
+                st.info(f"{icon} **{title}**\n\n{content}")
+
+        if len(insights) > 3:
+            st.caption(f"还有{len(insights) - 3}个洞察，点击'分析报告'查看更多")
+    else:
+        st.success("✅ **订阅结构良好**\n\n您的订阅管理情况很不错，继续保持定期评估的习惯！")
+
+def generate_default_insights(user_overview):
+    """生成默认洞察（当AI不可用时使用）"""
+    insights = []
+
     subscriptions = user_overview.get('subscriptions', [])
     monthly_spending = user_overview.get('monthly_spending', 0)
     categories = user_overview.get('subscription_categories', {})
 
-    insights = []
-
-    # 生成智能洞察
+    # 支出分析
     if monthly_spending > 200:
         insights.append({
             "type": "warning",
@@ -186,6 +234,7 @@ def render_insights_preview():
             "content": f"您的月度订阅支出为¥{monthly_spending:.2f}，建议定期评估各服务的使用频率。"
         })
 
+    # 订阅数量分析
     if len(subscriptions) > 5:
         insights.append({
             "type": "info",
@@ -204,22 +253,7 @@ def render_insights_preview():
             "content": f"娱乐类支出¥{entertainment_cost:.2f}/月，可以考虑选择性保留最常用的服务。"
         })
 
-    # 显示洞察
-    if insights:
-        for insight in insights[:2]:  # 只显示前2个洞察
-            icon = insight["icon"]
-            title = insight["title"]
-            content = insight["content"]
-
-            if insight["type"] == "warning":
-                st.warning(f"{icon} **{title}**\n\n{content}")
-            else:
-                st.info(f"{icon} **{title}**\n\n{content}")
-
-        if len(insights) > 2:
-            st.caption(f"还有{len(insights) - 2}个洞察，点击'分析报告'查看更多")
-    else:
-        st.success("✅ **订阅结构良好**\n\n您的订阅管理情况很不错，继续保持定期评估的习惯！")
+    return insights
 
 def render_tips_section():
     """渲染使用技巧"""

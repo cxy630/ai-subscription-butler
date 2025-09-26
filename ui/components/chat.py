@@ -6,12 +6,14 @@ import streamlit as st
 from datetime import datetime
 import sys
 from pathlib import Path
+import asyncio
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from core.database.data_interface import data_manager
+from core.ai import get_ai_assistant, is_ai_assistant_available
 
 def get_ai_response_mock(user_message: str, user_context: dict) -> str:
     """
@@ -157,6 +159,67 @@ def render_suggested_questions():
                 st.session_state.user_input = suggestion
                 st.rerun()
 
+def get_ai_response_smart(user_message: str, user_context: dict) -> dict:
+    """
+    智能AI响应 - 优先使用OpenAI API，失败时使用模拟响应
+
+    Args:
+        user_message: 用户输入的消息
+        user_context: 用户上下文信息
+
+    Returns:
+        AI响应结果字典
+    """
+    # 检查AI助手是否可用
+    if is_ai_assistant_available():
+        try:
+            ai_assistant = get_ai_assistant()
+
+            # 获取对话历史
+            conversation_history = []
+            if "chat_history" in st.session_state:
+                for i, (user_msg, ai_msg) in enumerate(st.session_state.chat_history):
+                    if user_msg:  # 跳过欢迎消息
+                        conversation_history.append({"role": "user", "content": user_msg})
+                        if isinstance(ai_msg, str):
+                            conversation_history.append({"role": "assistant", "content": ai_msg})
+                        elif isinstance(ai_msg, dict):
+                            conversation_history.append({"role": "assistant", "content": ai_msg.get("response", "")})
+
+            # 调用AI助手
+            response = ai_assistant.chat_sync(user_message, user_context, conversation_history)
+            return response
+
+        except Exception as e:
+            st.error(f"AI助手调用失败: {str(e)}")
+            # 降级到模拟响应
+
+    # 使用模拟响应作为降级
+    mock_response = get_ai_response_mock(user_message, user_context)
+    return {
+        "response": mock_response,
+        "intent": "fallback",
+        "confidence": 0.6,
+        "model": "fallback",
+        "timestamp": datetime.now().isoformat()
+    }
+
+def render_ai_status():
+    """渲染AI状态信息"""
+    if is_ai_assistant_available():
+        ai_assistant = get_ai_assistant()
+        status = ai_assistant.get_status()
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.success(f"🤖 AI助手: 在线 ({status['model']})")
+        with col2:
+            requests_used = status['daily_requests_used']
+            daily_limit = status['daily_limit']
+            st.info(f"📊 今日使用: {requests_used}/{daily_limit}")
+    else:
+        st.warning("🤖 AI助手: 离线 (使用模拟响应)")
+
 def render_chat_interface():
     """渲染完整的聊天界面"""
     st.title("🤖 AI助手")
@@ -164,6 +227,10 @@ def render_chat_interface():
     if not st.session_state.current_user_id:
         st.warning("请先选择用户")
         return
+
+    # 显示AI状态
+    render_ai_status()
+    st.divider()
 
     # 获取用户上下文
     user_context = data_manager.get_user_overview(st.session_state.current_user_id) or {}
@@ -175,7 +242,9 @@ def render_chat_interface():
         # 显示欢迎消息
         if "chat_initialized" not in st.session_state:
             st.session_state.chat_initialized = True
-            welcome_msg = get_ai_response_mock("你好", user_context)
+            # 使用智能响应生成欢迎消息
+            welcome_response = get_ai_response_smart("你好", user_context)
+            welcome_msg = welcome_response["response"] if isinstance(welcome_response, dict) else welcome_response
             st.session_state.chat_history = [(None, welcome_msg)]
 
         # 显示聊天历史
@@ -192,7 +261,7 @@ def render_chat_interface():
         value=st.session_state.get("user_input", "")
     )
 
-    col1, col2, col3 = st.columns([2, 1, 1])
+    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
 
     with col1:
         send_button = st.button("📤 发送", use_container_width=True, type="primary")
@@ -201,6 +270,7 @@ def render_chat_interface():
         if st.button("🗑️ 清空", use_container_width=True):
             st.session_state.chat_history = []
             st.session_state.user_input = ""
+            st.session_state.chat_initialized = False
             st.rerun()
 
     with col3:
@@ -208,27 +278,44 @@ def render_chat_interface():
             st.session_state.show_suggestions = not st.session_state.get("show_suggestions", False)
             st.rerun()
 
+    with col4:
+        if st.button("⚙️ 设置", use_container_width=True):
+            st.session_state.show_chat_settings = not st.session_state.get("show_chat_settings", False)
+            st.rerun()
+
     # 处理用户输入
     if send_button and user_input.strip():
-        # 获取AI响应
-        ai_response = get_ai_response_mock(user_input, user_context)
+        # 显示处理状态
+        with st.spinner("🤖 AI助手正在思考..."):
+            # 获取AI响应
+            ai_response_data = get_ai_response_smart(user_input, user_context)
 
-        # 保存对话到历史
-        st.session_state.chat_history.append((user_input, ai_response))
+            # 提取响应文本
+            if isinstance(ai_response_data, dict):
+                ai_response = ai_response_data["response"]
+                intent = ai_response_data.get("intent", "general_query")
+                confidence = ai_response_data.get("confidence", 0.8)
+            else:
+                ai_response = ai_response_data
+                intent = "general_query"
+                confidence = 0.8
 
-        # 保存到数据库
-        data_manager.save_conversation(
-            user_id=st.session_state.current_user_id,
-            session_id=st.session_state.chat_session_id,
-            message=user_input,
-            response=ai_response,
-            intent="general_query",
-            confidence=0.85
-        )
+            # 保存对话到历史
+            st.session_state.chat_history.append((user_input, ai_response_data))
 
-        # 清空输入
-        st.session_state.user_input = ""
-        st.rerun()
+            # 保存到数据库
+            data_manager.save_conversation(
+                user_id=st.session_state.current_user_id,
+                session_id=st.session_state.chat_session_id,
+                message=user_input,
+                response=ai_response,
+                intent=intent,
+                confidence=confidence
+            )
+
+            # 清空输入
+            st.session_state.user_input = ""
+            st.rerun()
 
     # 清空临时输入状态
     if "user_input" in st.session_state:
@@ -239,10 +326,15 @@ def render_chat_interface():
         st.divider()
         render_suggested_questions()
 
+    # 显示聊天设置
+    if st.session_state.get("show_chat_settings", False):
+        st.divider()
+        render_chat_settings()
+
     # 聊天统计
     st.divider()
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("💬 对话轮数", len(st.session_state.get("chat_history", [])))
 
@@ -253,6 +345,15 @@ def render_chat_interface():
 
     with col3:
         st.metric("🎯 会话ID", st.session_state.chat_session_id[:8] + "...")
+
+    with col4:
+        # 显示AI模型信息
+        if is_ai_assistant_available():
+            ai_assistant = get_ai_assistant()
+            status = ai_assistant.get_status()
+            st.metric("🧠 AI模型", status["model"])
+        else:
+            st.metric("🧠 AI模型", "模拟响应")
 
 def render_chat_settings():
     """渲染聊天设置"""
