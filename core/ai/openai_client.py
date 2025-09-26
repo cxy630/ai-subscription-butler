@@ -2,12 +2,68 @@
 OpenAI API客户端 - 处理与OpenAI服务的交互
 """
 
-import openai
+from openai import OpenAI, AsyncOpenAI
 import json
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from pathlib import Path
+import logging
+import re
+import html
+import time
+from collections import defaultdict
+
+class RateLimiter:
+    """API请求速率限制器"""
+
+    def __init__(self, max_requests: int = 60, window_seconds: int = 60):
+        """
+        初始化速率限制器
+
+        Args:
+            max_requests: 时间窗口内的最大请求数
+            window_seconds: 时间窗口大小（秒）
+        """
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.requests = defaultdict(list)  # user_id -> [timestamp, timestamp, ...]
+
+    def is_allowed(self, user_id: str = "default") -> bool:
+        """
+        检查是否允许请求
+
+        Args:
+            user_id: 用户标识
+
+        Returns:
+            bool: 是否允许请求
+        """
+        current_time = time.time()
+        user_requests = self.requests[user_id]
+
+        # 清理过期的请求记录
+        cutoff_time = current_time - self.window_seconds
+        self.requests[user_id] = [
+            timestamp for timestamp in user_requests
+            if timestamp > cutoff_time
+        ]
+
+        # 检查是否超过限制
+        if len(self.requests[user_id]) >= self.max_requests:
+            return False
+
+        # 记录当前请求
+        self.requests[user_id].append(current_time)
+        return True
+
+    def get_reset_time(self, user_id: str = "default") -> float:
+        """获取速率限制重置时间"""
+        if not self.requests[user_id]:
+            return 0.0
+
+        oldest_request = min(self.requests[user_id])
+        return max(0.0, oldest_request + self.window_seconds - time.time())
 
 class OpenAIClient:
     """OpenAI API客户端类"""
@@ -23,8 +79,19 @@ class OpenAIClient:
         if not self.api_key:
             raise ValueError("未找到OpenAI API密钥，请设置环境变量OPENAI_API_KEY或传入api_key参数")
 
-        # 配置OpenAI客户端
-        openai.api_key = self.api_key
+        # 初始化新版OpenAI客户端
+        self.client = OpenAI(api_key=self.api_key)
+        self.async_client = AsyncOpenAI(api_key=self.api_key)
+
+        # 设置日志
+        self.logger = logging.getLogger(__name__)
+
+        # 输入验证配置
+        self.max_message_length = 2000
+        self.max_context_length = 5000
+
+        # 速率限制器 (每分钟最多30个请求)
+        self.rate_limiter = RateLimiter(max_requests=30, window_seconds=60)
 
         # 系统提示词
         self.system_prompt = """你是AI订阅管家的智能助手，专门帮助用户管理订阅服务。
@@ -63,6 +130,33 @@ class OpenAIClient:
             包含AI响应和相关信息的字典
         """
         try:
+            # 输入验证和清理
+            if not self._validate_user_input(user_message):
+                return {
+                    "response": "抱歉，您的输入包含不当内容或过长，请重新输入。",
+                    "intent": "validation_error",
+                    "confidence": 0.0,
+                    "error": "Input validation failed",
+                    "model": "validation",
+                    "timestamp": datetime.now().isoformat()
+                }
+
+            # 清理用户输入
+            user_message = self._sanitize_input(user_message)
+
+            # 检查速率限制
+            if not self.rate_limiter.is_allowed():
+                reset_time = self.rate_limiter.get_reset_time()
+                return {
+                    "response": f"请求过于频繁，请等待 {reset_time:.0f} 秒后重试。",
+                    "intent": "rate_limit",
+                    "confidence": 0.0,
+                    "error": "Rate limit exceeded",
+                    "model": "rate_limiter",
+                    "reset_time": reset_time,
+                    "timestamp": datetime.now().isoformat()
+                }
+
             # 构建消息上下文
             context_info = self._build_context_string(user_context)
 
@@ -85,8 +179,10 @@ class OpenAIClient:
             # 添加当前用户消息
             messages.append({"role": "user", "content": user_message})
 
-            # 调用OpenAI API
-            response = await openai.ChatCompletion.acreate(
+            # 调用新版OpenAI API
+            self.logger.info(f"Sending request to OpenAI with {len(messages)} messages")
+
+            response = await self.async_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=messages,
                 max_tokens=1000,
@@ -101,6 +197,8 @@ class OpenAIClient:
             # 分析响应意图和置信度
             intent = self._analyze_intent(user_message)
             confidence = self._calculate_confidence(response, user_message)
+
+            self.logger.info(f"OpenAI response received, tokens used: {response.usage.total_tokens}")
 
             return {
                 "response": ai_message,
@@ -133,6 +231,33 @@ class OpenAIClient:
         同步版本的AI响应获取
         """
         try:
+            # 输入验证和清理
+            if not self._validate_user_input(user_message):
+                return {
+                    "response": "抱歉，您的输入包含不当内容或过长，请重新输入。",
+                    "intent": "validation_error",
+                    "confidence": 0.0,
+                    "error": "Input validation failed",
+                    "model": "validation",
+                    "timestamp": datetime.now().isoformat()
+                }
+
+            # 清理用户输入
+            user_message = self._sanitize_input(user_message)
+
+            # 检查速率限制
+            if not self.rate_limiter.is_allowed():
+                reset_time = self.rate_limiter.get_reset_time()
+                return {
+                    "response": f"请求过于频繁，请等待 {reset_time:.0f} 秒后重试。",
+                    "intent": "rate_limit",
+                    "confidence": 0.0,
+                    "error": "Rate limit exceeded",
+                    "model": "rate_limiter",
+                    "reset_time": reset_time,
+                    "timestamp": datetime.now().isoformat()
+                }
+
             # 构建消息上下文
             context_info = self._build_context_string(user_context)
 
@@ -155,8 +280,10 @@ class OpenAIClient:
             # 添加当前用户消息
             messages.append({"role": "user", "content": user_message})
 
-            # 调用OpenAI API (同步版本)
-            response = openai.ChatCompletion.create(
+            # 调用新版OpenAI API (同步版本)
+            self.logger.info(f"Sending sync request to OpenAI with {len(messages)} messages")
+
+            response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=messages,
                 max_tokens=1000,
@@ -171,6 +298,8 @@ class OpenAIClient:
             # 分析响应意图和置信度
             intent = self._analyze_intent(user_message)
             confidence = self._calculate_confidence(response, user_message)
+
+            self.logger.info(f"OpenAI sync response received, tokens used: {response.usage.total_tokens}")
 
             return {
                 "response": ai_message,
@@ -313,7 +442,9 @@ class OpenAIClient:
   }}
 ]"""
 
-            response = await openai.ChatCompletion.acreate(
+            self.logger.info("Generating insights with OpenAI")
+
+            response = await self.async_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "你是一个订阅管理专家，擅长数据分析和个性化建议。"},
@@ -383,6 +514,77 @@ class OpenAIClient:
             })
 
         return insights
+
+    def _validate_user_input(self, user_message: str) -> bool:
+        """
+        验证用户输入安全性和有效性
+
+        Args:
+            user_message: 用户输入的消息
+
+        Returns:
+            bool: 验证是否通过
+        """
+        # 检查消息长度
+        if not user_message or len(user_message.strip()) == 0:
+            return False
+
+        if len(user_message) > self.max_message_length:
+            self.logger.warning(f"User input too long: {len(user_message)} characters")
+            return False
+
+        # 检查恶意模式
+        malicious_patterns = [
+            r'<script[^>]*>.*?</script>',  # JavaScript
+            r'javascript:',
+            r'eval\s*\(',
+            r'exec\s*\(',
+            r'system\s*\(',
+            r'__import__\s*\(',
+            r'\.\./',  # 路径遍历
+            r'SELECT\s+.*FROM',  # SQL注入基础模式
+            r'DROP\s+TABLE',
+            r'DELETE\s+FROM',
+            r'INSERT\s+INTO'
+        ]
+
+        for pattern in malicious_patterns:
+            if re.search(pattern, user_message, re.IGNORECASE):
+                self.logger.warning(f"Malicious pattern detected: {pattern}")
+                return False
+
+        # 检查过多的重复字符（可能是攻击）
+        if re.search(r'(.)\1{100,}', user_message):
+            self.logger.warning("Excessive character repetition detected")
+            return False
+
+        return True
+
+    def _sanitize_input(self, user_message: str) -> str:
+        """
+        清理和标准化用户输入
+
+        Args:
+            user_message: 用户输入的消息
+
+        Returns:
+            str: 清理后的消息
+        """
+        # HTML转义
+        sanitized = html.escape(user_message)
+
+        # 移除多余的空白字符
+        sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+
+        # 限制长度
+        if len(sanitized) > self.max_message_length:
+            sanitized = sanitized[:self.max_message_length] + "..."
+
+        # 记录清理操作
+        if sanitized != user_message:
+            self.logger.info("User input sanitized")
+
+        return sanitized
 
 # 创建全局客户端实例
 _openai_client = None
