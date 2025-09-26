@@ -1,0 +1,1781 @@
+# AI Subscription Butler - Complete Project Specification
+这个文件包含了完整的：
+- ✅ 项目概览和目标
+- ✅ 产品需求详述
+- ✅ 团队角色定义
+- ✅ 技术架构设计
+- ✅ 开发工作流程
+- ✅ 代码规范标准
+- ✅ 测试部署流程
+- ✅ 故障排查指南
+- ✅ 安全合规要求
+- ✅ 持续改进流程
+
+## 🎯 Project Overview
+
+### Project Identity
+- **Name**: AI Subscription Butler (AI订阅管家)
+- **Version**: 1.0.0
+- **Type**: AI-Native SaaS Application
+- **Stage**: MVP Development
+- **Timeline**: 30-day MVP, 90-day Production
+
+### Mission Statement
+Build an AI-powered subscription management assistant that helps users discover, manage, and optimize their subscriptions through natural conversation, ultimately saving them time and money while preventing subscription chaos.
+
+### Core Value Proposition
+- **Problem**: Users lose track of subscriptions, waste money on unused services, and struggle with cancellations
+- **Solution**: An intelligent AI butler that proactively manages all subscriptions through natural conversation
+- **Unique Value**: AI-first approach + Proactive management + Automated optimization + Zero-friction interaction
+
+### Target Market
+```yaml
+Primary Users:
+  Demographics: 25-35 urban professionals
+  Characteristics: 
+    - 10+ active subscriptions
+    - Monthly income > $1,500
+    - Tech-savvy, time-poor
+  Pain Points:
+    - Subscription fatigue
+    - Budget concerns
+    - Cancellation friction
+
+Secondary Users:
+  - Students managing limited budgets
+  - Families coordinating shared subscriptions
+  - Freelancers tracking business subscriptions
+
+Market Focus:
+  Initial: China (WeChat/Alipay ecosystem)
+  Expansion: Global markets
+  TAM: 500M+ subscription users worldwide
+```
+
+## 🎨 Product Requirements
+
+### User Journey Map
+```yaml
+Discovery:
+  - User learns about app through social media/word-of-mouth
+  - Attracted by "save money" promise
+  - Downloads app or visits website
+
+Onboarding:
+  - Simple registration (email/phone)
+  - Guided first subscription addition
+  - Optional: Upload bill screenshot for auto-import
+  - See immediate value (spending overview)
+
+Activation:
+  - Add 3+ subscriptions
+  - Interact with AI assistant
+  - Receive first insight/saving opportunity
+  - Set up reminders
+
+Engagement:
+  - Daily/weekly AI interactions
+  - Monthly spending reviews
+  - Act on optimization suggestions
+  - Share savings achievements
+
+Retention:
+  - Consistent value delivery
+  - Feature discovery
+  - Community engagement
+  - Referral rewards
+```
+
+### Core Features (MVP)
+
+#### 1. Conversational AI Assistant
+```yaml
+Description: Natural language interface for all subscription operations
+Priority: P0 (Must Have)
+Success Metrics:
+  - Intent recognition accuracy > 90%
+  - Response time < 2 seconds
+  - User satisfaction > 4.5/5
+
+User Stories:
+  - "I just subscribed to Netflix for $15"
+  - "How much am I spending monthly?"
+  - "Help me cancel unused subscriptions"
+  - "Find me cheaper alternatives"
+
+Technical Requirements:
+  - Multi-turn conversation support
+  - Context retention
+  - Multilingual (Chinese/English)
+  - Fallback handling
+```
+
+#### 2. Smart Bill Recognition (OCR)
+```yaml
+Description: Extract subscriptions from bill screenshots
+Priority: P0 (Must Have)
+Success Metrics:
+  - Recognition accuracy > 85%
+  - Processing time < 5 seconds
+  - Support major payment platforms
+
+Supported Sources:
+  - Alipay bills
+  - WeChat Pay statements
+  - Credit card statements
+  - Bank statements
+  - Email receipts
+
+Technical Requirements:
+  - GPT-4 Vision integration
+  - Multi-format support (PNG/JPG/PDF)
+  - Confidence scoring
+  - Manual correction interface
+```
+
+#### 3. Subscription Dashboard
+```yaml
+Description: Visual overview of all subscriptions
+Priority: P0 (Must Have)
+Components:
+  - Monthly spending summary
+  - Category breakdown
+  - Upcoming renewals
+  - Quick actions
+
+Metrics Displayed:
+  - Total monthly/yearly cost
+  - Number of active subscriptions
+  - Spending by category
+  - Savings opportunities
+```
+
+#### 4. Intelligent Reminders
+```yaml
+Description: Proactive notifications system
+Priority: P1 (Should Have)
+Types:
+  - Renewal reminders (3 days before)
+  - Price change alerts
+  - Unused service warnings (30+ days)
+  - Trial expiration alerts
+  - Optimization opportunities
+
+Channels:
+  - In-app notifications
+  - Email digests
+  - Push notifications (mobile)
+```
+
+## 👥 Development Team Roles
+
+### Role-Based Development Framework
+```yaml
+Product_Manager:
+  Name: Alex Chen
+  Personality: User-focused, data-driven, pragmatic
+  Responsibilities:
+    - Define product requirements and priorities
+    - Write user stories and acceptance criteria
+    - Make feature trade-off decisions
+    - Monitor success metrics
+  Decision_Authority:
+    - Feature scope and prioritization
+    - Release planning
+    - User experience standards
+  Key_Questions:
+    - "Does this solve a real user problem?"
+    - "What's the simplest solution?"
+    - "How do we measure success?"
+
+Tech_Lead:
+  Name: Sarah Liu
+  Personality: Architecture-minded, quality-focused, balanced
+  Responsibilities:
+    - System architecture design
+    - Technology selection
+    - Code review and standards
+    - Technical debt management
+  Decision_Authority:
+    - Technical stack choices
+    - Architecture patterns
+    - Development practices
+  Key_Questions:
+    - "Is this scalable and maintainable?"
+    - "What are the technical risks?"
+    - "How do we ensure code quality?"
+
+AI_Engineer:
+  Name: David Wang
+  Personality: Innovation-driven, efficiency-focused, analytical
+  Responsibilities:
+    - LLM integration and optimization
+    - Prompt engineering
+    - Knowledge base design
+    - AI cost optimization
+  Decision_Authority:
+    - Model selection
+    - Prompt design
+    - RAG architecture
+  Key_Questions:
+    - "How can AI enhance this feature?"
+    - "What's the cost vs. quality trade-off?"
+    - "How do we handle edge cases?"
+
+Full_Stack_Developer:
+  Name: Emily Zhang
+  Personality: Pragmatic, user-centric, fast-mover
+  Responsibilities:
+    - Feature implementation
+    - UI/UX development
+    - API design
+    - Database operations
+  Decision_Authority:
+    - Implementation details
+    - UI components
+    - API contracts
+  Key_Questions:
+    - "What's the fastest path to working code?"
+    - "How does this impact user experience?"
+    - "Is the code maintainable?"
+
+QA_Engineer:
+  Name: Michael Li
+  Personality: Detail-oriented, risk-aware, quality-guardian
+  Responsibilities:
+    - Test strategy and execution
+    - Bug identification and tracking
+    - Performance testing
+    - User acceptance testing
+  Decision_Authority:
+    - Quality gates
+    - Testing coverage
+    - Release readiness
+  Key_Questions:
+    - "What could go wrong?"
+    - "Are edge cases covered?"
+    - "Is this ready for users?"
+
+DevOps_Engineer:
+  Name: Jessica Wu
+  Personality: Automation-first, security-conscious, efficiency-driven
+  Responsibilities:
+    - Infrastructure setup
+    - CI/CD pipelines
+    - Monitoring and alerts
+    - Security compliance
+  Decision_Authority:
+    - Deployment strategy
+    - Infrastructure choices
+    - Security policies
+  Key_Questions:
+    - "How do we automate this?"
+    - "What are the security implications?"
+    - "How do we monitor and scale?"
+```
+
+## 📐 Technical Architecture
+
+### Technology Stack
+```yaml
+Core_Stack:
+  Language: Python 3.9+
+  Why: AI ecosystem, rapid development, single language
+
+Frontend:
+  Primary: Streamlit 1.28+
+  Why: 
+    - Fastest path to working UI
+    - Python-native
+    - Built-in components
+    - Real-time updates
+  Future: React (when scaling)
+
+Backend:
+  Framework: FastAPI (when needed)
+  Database: 
+    Dev: SQLite
+    Prod: PostgreSQL
+  ORM: SQLAlchemy
+  Cache: Redis (production)
+
+AI_ML:
+  LLM_Provider: OpenAI
+  Models:
+    - Chat: GPT-3.5-turbo (cost-effective)
+    - Complex: GPT-4 (when needed)
+    - Vision: GPT-4-vision (OCR)
+  Embeddings: text-embedding-ada-002
+  Vector_Store: ChromaDB (local) / Pinecone (cloud)
+  Framework: LangChain
+
+Infrastructure:
+  Development:
+    - Local Python environment
+    - Docker for consistency
+  
+  Deployment:
+    - Platform: Railway / Vercel / Render
+    - Container: Docker
+    - CDN: Cloudflare
+  
+  Monitoring:
+    - Errors: Sentry
+    - Analytics: Mixpanel / PostHog
+    - Logs: CloudWatch / LogDNA
+    - Uptime: UptimeRobot
+
+External_Services:
+  Payment: Stripe / LemonSqueezy
+  Email: SendGrid / Resend
+  SMS: Twilio
+  Storage: AWS S3 / Cloudflare R2
+```
+
+### Project Structure
+```bash
+ai-subscription-butler/
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # GitHub Actions CI/CD
+├── app/
+│   ├── __init__.py
+│   ├── main.py                 # Streamlit entry point
+│   ├── config.py               # Configuration management
+│   └── constants.py            # Application constants
+├── core/
+│   ├── __init__.py
+│   ├── ai/
+│   │   ├── __init__.py
+│   │   ├── agent.py            # Main AI agent logic
+│   │   ├── prompts.py          # Prompt templates
+│   │   ├── intents.py          # Intent recognition
+│   │   ├── knowledge.py        # Knowledge base management
+│   │   └── cost_optimizer.py   # LLM cost optimization
+│   ├── database/
+│   │   ├── __init__.py
+│   │   ├── models.py           # SQLAlchemy models
+│   │   ├── crud.py             # CRUD operations
+│   │   ├── session.py          # Database session management
+│   │   └── migrations/         # Alembic migrations
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── subscription.py     # Subscription business logic
+│   │   ├── analytics.py        # Analytics service
+│   │   ├── ocr.py             # OCR service
+│   │   ├── reminder.py        # Reminder service
+│   │   ├── auth.py            # Authentication service
+│   │   └── payment.py         # Payment processing
+│   └── utils/
+│       ├── __init__.py
+│       ├── validators.py      # Input validation
+│       ├── helpers.py         # Helper functions
+│       ├── decorators.py      # Custom decorators
+│       └── exceptions.py      # Custom exceptions
+├── ui/
+│   ├── __init__.py
+│   ├── components/
+│   │   ├── __init__.py
+│   │   ├── chat.py           # Chat interface component
+│   │   ├── dashboard.py      # Dashboard component
+│   │   ├── subscription_card.py
+│   │   └── charts.py         # Data visualization
+│   ├── pages/
+│   │   ├── __init__.py
+│   │   ├── home.py          # Home page
+│   │   ├── chat_page.py     # AI chat page
+│   │   ├── analytics_page.py # Analytics page
+│   │   └── settings_page.py # Settings page
+│   └── styles/
+│       └── custom.css        # Custom CSS styles
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py          # Pytest configuration
+│   ├── unit/
+│   │   ├── test_ai_agent.py
+│   │   ├── test_subscription.py
+│   │   └── test_analytics.py
+│   ├── integration/
+│   │   ├── test_api.py
+│   │   └── test_database.py
+│   └── fixtures/
+│       ├── sample_data.json
+│       └── test_images/
+├── scripts/
+│   ├── setup.py             # Initial setup script
+│   ├── seed_db.py          # Seed database
+│   ├── migrate_db.py       # Database migration
+│   └── deploy.sh           # Deployment script
+├── data/
+│   ├── .gitkeep
+│   ├── subscriptions.db    # SQLite database (dev)
+│   └── knowledge/
+│       └── services.json   # Service knowledge base
+├── docs/
+│   ├── requirement.md     # Requirements analysis document
+│   ├── architecture.md    # Technical architecture document
+│   ├── database.md        # Database design document
+│   ├── ui-design.md       # UI/UX design specification
+│   ├── ai-integration.md  # AI integration documentation
+│   ├── ocr-system.md      # OCR system documentation
+│   ├── analytics.md       # Analytics system documentation
+│   ├── notification.md    # Notification system documentation
+│   ├── security.md        # Security documentation
+│   ├── testing.md         # Testing documentation
+│   ├── deployment.md      # Deployment guide
+│   ├── api.md             # API documentation
+│   ├── user-manual.md     # User manual and guide
+│   └── troubleshooting.md # Troubleshooting guide
+├── docker/
+│   ├── Dockerfile         # Production Dockerfile
+│   ├── Dockerfile.dev     # Development Dockerfile
+│   └── docker-compose.yml # Docker Compose config
+├── .env.example          # Environment variables template
+├── .gitignore           # Git ignore file
+├── requirements.txt     # Python dependencies
+├── requirements-dev.txt # Development dependencies
+├── pyproject.toml      # Python project configuration
+├── README.md           # Project README
+├── LICENSE             # License file
+└── claude.md          # This file - Claude AI context
+```
+
+## 🚀 Development Workflow
+
+### Sprint Planning (2-Week Sprints)
+```yaml
+Sprint_0_Foundation:
+  Duration: Week 1-2
+  Goals:
+    - Project setup and configuration
+    - Requirements analysis documentation
+    - Technical architecture design
+    - Basic UI with Streamlit
+    - Database models and CRUD
+    - Simple subscription management
+  Deliverables:
+    - Working local environment
+    - requirement.md - Requirements analysis document
+    - architecture.md - Technical architecture document
+    - database.md - Database design document
+    - Add/Edit/Delete subscriptions
+    - Basic dashboard
+  Documentation Tasks:
+    - Write comprehensive requirements analysis
+    - Document system architecture and design decisions
+    - Create database schema documentation
+
+Sprint_1_AI_Integration:
+  Duration: Week 3-4
+  Goals:
+    - OpenAI integration
+    - Conversational interface
+    - Intent recognition
+    - Basic prompts
+    - UI/UX design specification
+  Deliverables:
+    - Working chatbot
+    - Natural language commands
+    - Context retention
+    - ui-design.md - UI/UX design specification
+    - ai-integration.md - AI integration documentation
+  Documentation Tasks:
+    - Document AI prompt engineering strategies
+    - Create UI component library documentation
+    - Write integration testing procedures
+
+Sprint_2_Intelligence:
+  Duration: Week 5-6
+  Goals:
+    - OCR implementation
+    - Smart analytics
+    - Reminder system
+    - Optimization suggestions
+  Deliverables:
+    - Bill recognition
+    - Spending insights
+    - Proactive reminders
+    - ocr-system.md - OCR system documentation
+    - analytics.md - Analytics system documentation
+    - notification.md - Notification system documentation
+  Documentation Tasks:
+    - Document OCR accuracy metrics and optimization
+    - Create analytics dashboard user guide
+    - Write notification configuration manual
+
+Sprint_3_Polish:
+  Duration: Week 7-8
+  Goals:
+    - Security implementation
+    - UI/UX improvements
+    - Performance optimization
+    - Bug fixes
+    - Deployment preparation
+    - Comprehensive documentation
+  Deliverables:
+    - Production-ready MVP
+    - Deployed application
+    - Complete documentation suite
+    - security.md - Security documentation
+    - testing.md - Testing documentation
+    - deployment.md - Deployment guide
+    - api.md - API documentation
+    - User manual and troubleshooting guide
+  Documentation Tasks:
+    - Create comprehensive API documentation
+    - Write deployment and operations manual
+    - Document security best practices
+    - Create user troubleshooting guide
+```
+
+### Code Development Standards
+
+#### Python Code Style Guide
+```python
+"""
+Python Code Standards for AI Subscription Butler
+
+1. General Rules:
+   - Python 3.9+ features allowed
+   - Type hints required for all functions
+   - Docstrings required for all public methods
+   - Maximum line length: 88 (Black formatter)
+   - Maximum function length: 50 lines
+   - Maximum file length: 500 lines
+
+2. Naming Conventions:
+   - Classes: PascalCase
+   - Functions/Variables: snake_case
+   - Constants: UPPER_SNAKE_CASE
+   - Private methods: _leading_underscore
+
+3. Import Order:
+   1. Standard library
+   2. Third-party packages
+   3. Local application imports
+   (Each group alphabetically sorted)
+"""
+
+from typing import List, Optional, Dict, Any, Union
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+from enum import Enum
+import logging
+
+import streamlit as st
+from pydantic import BaseModel, Field, validator
+from sqlalchemy.orm import Session
+import openai
+
+from core.database.models import Subscription, User
+from core.utils.exceptions import SubscriptionError
+from core.utils.validators import validate_price
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Constants
+MAX_SUBSCRIPTIONS_FREE = 5
+MAX_SUBSCRIPTIONS_PRO = 100
+RENEWAL_REMINDER_DAYS = 3
+UNUSED_THRESHOLD_DAYS = 30
+
+class BillingCycle(Enum):
+    """Subscription billing cycle options."""
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
+    LIFETIME = "lifetime"
+
+@dataclass
+class SubscriptionDTO:
+    """Data Transfer Object for subscription data."""
+    service_name: str
+    price: float
+    billing_cycle: BillingCycle
+    category: Optional[str] = None
+    next_billing_date: Optional[datetime] = None
+    notes: Optional[str] = None
+    
+    def __post_init__(self):
+        """Validate data after initialization."""
+        if self.price < 0:
+            raise ValueError("Price cannot be negative")
+        if self.next_billing_date and self.next_billing_date < datetime.now():
+            raise ValueError("Next billing date cannot be in the past")
+
+class SubscriptionService:
+    """
+    Service layer for subscription management.
+    
+    This service handles all business logic related to subscriptions,
+    including CRUD operations, analytics, and AI interactions.
+    
+    Attributes:
+        db: Database session
+        ai_agent: AI agent for intelligent features
+        cache: Redis cache client (optional)
+    """
+    
+    def __init__(
+        self,
+        db: Session,
+        ai_agent: Optional[Any] = None,
+        cache: Optional[Any] = None
+    ):
+        """
+        Initialize subscription service.
+        
+        Args:
+            db: SQLAlchemy database session
+            ai_agent: AI agent instance for intelligent features
+            cache: Cache client for performance optimization
+        """
+        self.db = db
+        self.ai_agent = ai_agent
+        self.cache = cache
+        self._logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+    
+    def create_subscription(
+        self,
+        user_id: str,
+        subscription_data: SubscriptionDTO
+    ) -> Dict[str, Any]:
+        """
+        Create a new subscription for user.
+        
+        This method handles the complete subscription creation process,
+        including validation, AI analysis, and notification setup.
+        
+        Args:
+            user_id: User identifier
+            subscription_data: Subscription data transfer object
+            
+        Returns:
+            Created subscription dictionary with ID and metadata
+            
+        Raises:
+            SubscriptionError: If subscription limit exceeded
+            ValidationError: If data validation fails
+            
+        Example:
+            >>> service = SubscriptionService(db)
+            >>> data = SubscriptionDTO(
+            ...     service_name="Netflix",
+            ...     price=15.99,
+            ...     billing_cycle=BillingCycle.MONTHLY
+            ... )
+            >>> result = service.create_subscription("user123", data)
+            >>> print(result["id"])
+            "sub_abc123"
+        """
+        try:
+            # Check subscription limit
+            current_count = self._get_subscription_count(user_id)
+            if not self._check_subscription_limit(user_id, current_count):
+                raise SubscriptionError(
+                    f"Subscription limit exceeded. Current: {current_count}"
+                )
+            
+            # Create subscription entity
+            subscription = Subscription(
+                user_id=user_id,
+                service_name=subscription_data.service_name,
+                price=subscription_data.price,
+                billing_cycle=subscription_data.billing_cycle.value,
+                category=subscription_data.category or self._infer_category(
+                    subscription_data.service_name
+                ),
+                next_billing_date=subscription_data.next_billing_date or 
+                    self._calculate_next_billing(subscription_data.billing_cycle),
+                notes=subscription_data.notes
+            )
+            
+            # Save to database
+            self.db.add(subscription)
+            self.db.commit()
+            self.db.refresh(subscription)
+            
+            # Invalidate cache
+            if self.cache:
+                self._invalidate_user_cache(user_id)
+            
+            # Schedule reminders
+            self._schedule_renewal_reminder(subscription)
+            
+            # AI analysis (async)
+            if self.ai_agent:
+                self._trigger_ai_analysis(user_id)
+            
+            # Log success
+            self._logger.info(
+                f"Subscription created: {subscription.id} for user {user_id}"
+            )
+            
+            return {
+                "id": str(subscription.id),
+                "service_name": subscription.service_name,
+                "price": float(subscription.price),
+                "billing_cycle": subscription.billing_cycle,
+                "next_billing_date": subscription.next_billing_date.isoformat(),
+                "created_at": subscription.created_at.isoformat()
+            }
+            
+        except Exception as e:
+            self._logger.error(f"Failed to create subscription: {e}", exc_info=True)
+            self.db.rollback()
+            raise
+```
+
+#### AI/Prompt Engineering Standards
+```python
+"""
+AI/Prompt Engineering Standards
+
+1. Prompt Design Principles:
+   - Clear, specific instructions
+   - Consistent format and structure
+   - Examples when helpful
+   - Output format specification
+   - Error handling instructions
+
+2. Cost Optimization:
+   - Use GPT-3.5 for simple tasks
+   - GPT-4 only when necessary
+   - Cache frequent queries
+   - Batch similar requests
+   - Monitor token usage
+
+3. Quality Assurance:
+   - Validate AI responses
+   - Implement fallbacks
+   - Log anomalies
+   - A/B test prompts
+"""
+
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+@dataclass
+class PromptTemplate:
+    """Structured prompt template."""
+    system: str
+    user: str
+    examples: Optional[List[Dict]] = None
+    temperature: float = 0.7
+    max_tokens: int = 500
+    response_format: Optional[str] = None
+
+class AIAgent:
+    """
+    AI Agent for intelligent subscription management.
+    
+    @David (AI): This is the core AI brain of our application
+    """
+    
+    # System prompts for different personalities/modes
+    PERSONAS = {
+        "helpful_butler": """You are a professional subscription management butler.
+You help users manage their subscriptions efficiently and save money.
+Key traits:
+- Concise and actionable advice
+- Proactive problem detection
+- Friendly but professional tone
+- Focus on saving user's money and time""",
+        
+        "analyst": """You are a financial analyst specializing in subscriptions.
+Analyze spending patterns and provide data-driven insights.
+Be precise with numbers and percentages.""",
+        
+        "negotiator": """You are an expert negotiator for subscription services.
+Help users get better deals and cancel unwanted services.
+Provide scripts and tactics for negotiation."""
+    }
+    
+    def __init__(
+        self,
+        model: str = "gpt-3.5-turbo",
+        temperature: float = 0.7,
+        max_retries: int = 3
+    ):
+        """Initialize AI agent with configuration."""
+        self.model = model
+        self.temperature = temperature
+        self.max_retries = max_retries
+        self.conversation_history: List[Dict] = []
+        
+    def chat(
+        self,
+        user_message: str,
+        context: Dict[str, Any],
+        persona: str = "helpful_butler"
+    ) -> str:
+        """
+        Main chat interface for user interactions.
+        
+        Args:
+            user_message: User's input message
+            context: User context (subscriptions, preferences, etc.)
+            persona: AI persona to use
+            
+        Returns:
+            AI response string
+            
+        Example:
+            >>> agent = AIAgent()
+            >>> response = agent.chat(
+            ...     "How much am I spending monthly?",
+            ...     {"subscriptions": [...], "total": 245.50}
+            ... )
+        """
+        # Build enhanced prompt with context
+        system_prompt = self.PERSONAS[persona]
+        
+        user_prompt = f"""
+User Context:
+- Total Subscriptions: {len(context.get('subscriptions', []))}
+- Monthly Spending: ${context.get('total_monthly', 0):.2f}
+- Active Categories: {', '.join(context.get('categories', []))}
+
+User Message: {user_message}
+
+Instructions:
+1. Answer the user's question directly
+2. If you notice issues, proactively mention them
+3. Provide actionable suggestions when relevant
+4. Keep response concise (2-3 sentences unless asked for details)
+"""
+        
+        try:
+            response = self._call_llm(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=self.temperature
+            )
+            
+            # Log for analysis
+            self._log_interaction(user_message, response, context)
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"AI chat failed: {e}")
+            return self._get_fallback_response(user_message)
+```
+
+## 🚢 Deployment & Operations
+
+### Environment Configuration
+```bash
+# .env.example - Environment variables template
+
+# Application Settings
+APP_NAME=AI Subscription Butler
+APP_ENV=development  # development|staging|production
+APP_DEBUG=true
+APP_URL=http://localhost:8501
+SECRET_KEY=your-secret-key-here-minimum-32-characters
+
+# Database Configuration
+DATABASE_URL=sqlite:///data/subscriptions.db
+# Production: postgresql://user:password@host:5432/dbname
+DB_POOL_SIZE=5
+DB_MAX_OVERFLOW=10
+
+# OpenAI Configuration
+OPENAI_API_KEY=sk-your-api-key-here
+OPENAI_ORG_ID=org-your-org-id  # Optional
+OPENAI_MODEL_CHAT=gpt-3.5-turbo
+OPENAI_MODEL_COMPLEX=gpt-4
+OPENAI_MODEL_VISION=gpt-4-vision-preview
+OPENAI_MAX_TOKENS=1000
+OPENAI_TEMPERATURE=0.7
+OPENAI_REQUEST_TIMEOUT=30
+
+# Redis Cache (Production)
+REDIS_URL=redis://localhost:6379/0
+REDIS_TTL=3600  # 1 hour default
+
+# Feature Flags
+FEATURE_AI_CHAT=true
+FEATURE_OCR=true
+FEATURE_ANALYTICS=true
+FEATURE_REMINDERS=true
+FEATURE_FAMILY_SHARING=false  # Coming soon
+
+# Monitoring & Logging
+SENTRY_DSN=https://your-key@sentry.io/project-id
+LOG_LEVEL=INFO  # DEBUG|INFO|WARNING|ERROR
+LOG_FORMAT=json  # json|text
+LOG_FILE=logs/app.log
+
+# External Services
+STRIPE_API_KEY=sk_test_your-stripe-key
+STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+SENDGRID_API_KEY=your-sendgrid-key
+TWILIO_ACCOUNT_SID=your-twilio-sid
+TWILIO_AUTH_TOKEN=your-twilio-token
+
+# Security
+SESSION_LIFETIME=86400  # 24 hours
+CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_PERIOD=60  # seconds
+
+# Storage
+UPLOAD_MAX_SIZE=5242880  # 5MB in bytes
+UPLOAD_ALLOWED_EXTENSIONS=.jpg,.jpeg,.png,.pdf
+STORAGE_BACKEND=local  # local|s3
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_S3_BUCKET=your-bucket-name
+AWS_S3_REGION=us-east-1
+```
+
+### Docker Configuration
+```dockerfile
+# Dockerfile - Production container
+
+# Build stage
+FROM python:3.9-slim as builder
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Runtime stage
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy Python dependencies from builder
+COPY --from=builder /root/.local /root/.local
+
+# Copy application code
+COPY . .
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# Environment variables
+ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONUNBUFFERED=1
+ENV STREAMLIT_SERVER_PORT=8501
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python scripts/health_check.py || exit 1
+
+# Expose port
+EXPOSE 8501
+
+# Run application
+CMD ["streamlit", "run", "app/main.py", "--server.maxUploadSize=5"]
+```
+
+## 📊 Success Metrics & KPIs
+
+### Business Metrics
+```yaml
+User_Metrics:
+  Acquisition:
+    - Daily Active Users (DAU)
+    - Monthly Active Users (MAU)
+    - New User Registration Rate
+    - User Acquisition Cost (CAC)
+  
+  Activation:
+    - Users with 3+ subscriptions: > 60%
+    - First AI interaction within 24h: > 80%
+    - OCR feature usage: > 40%
+  
+  Retention:
+    - Day 1 Retention: > 60%
+    - Day 7 Retention: > 40%
+    - Day 30 Retention: > 25%
+    - Churn Rate: < 5% monthly
+  
+  Revenue:
+    - Monthly Recurring Revenue (MRR)
+    - Average Revenue Per User (ARPU)
+    - Customer Lifetime Value (LTV)
+    - LTV/CAC Ratio: > 3
+
+Product_Metrics:
+  Engagement:
+    - Average sessions per user per week: > 3
+    - Average AI interactions per session: > 2
+    - Feature adoption rates
+  
+  Value_Delivery:
+    - Average savings identified per user: > ¥50/month
+    - Subscriptions cancelled through app: > 20%
+    - User satisfaction score: > 4.5/5
+
+Technical_Metrics:
+  Performance:
+    - API Response Time P50: < 200ms
+    - API Response Time P99: < 1s
+    - AI Response Time: < 2s
+    - OCR Processing Time: < 5s
+  
+  Reliability:
+    - Uptime: > 99.9%
+    - Error Rate: < 0.1%
+    - Success Rate: > 99%
+  
+  Cost:
+    - AI API Cost per User: < ¥5/month
+    - Infrastructure Cost per User: < ¥2/month
+    - Total Cost per User: < ¥10/month
+```
+
+## 🚨 Troubleshooting Guide
+
+### Common Issues & Solutions
+```yaml
+Issue_1:
+  Problem: "AI responses are slow"
+  Symptoms:
+    - Response time > 5 seconds
+    - Timeout errors
+  Diagnosis:
+    - Check OpenAI API status
+    - Monitor token usage
+    - Review prompt size
+  Solutions:
+    - Implement caching for common queries
+    - Optimize prompt length
+    - Use GPT-3.5 for simple queries
+    - Add response streaming
+
+Issue_2:
+  Problem: "OCR recognition failing"
+  Symptoms:
+    - Low recognition accuracy
+    - Processing errors
+  Diagnosis:
+    - Check image quality
+    - Verify file size < 5MB
+    - Review API quotas
+  Solutions:
+    - Add image preprocessing
+    - Implement fallback to manual entry
+    - Guide users for better image capture
+
+Issue_3:
+  Problem: "Database performance issues"
+  Symptoms:
+    - Slow query responses
+    - Connection timeouts
+  Diagnosis:
+    - Check query execution plans
+    - Monitor connection pool
+    - Review indexes
+  Solutions:
+    - Add missing indexes
+    - Implement query optimization
+    - Use connection pooling
+    - Add Redis caching
+
+Issue_4:
+  Problem: "High AI API costs"
+  Symptoms:
+    - Costs exceeding budget
+    - Unexpected token usage
+  Diagnosis:
+    - Review token usage by endpoint
+    - Check for infinite loops
+    - Monitor prompt sizes
+  Solutions:
+    - Implement strict token limits
+    - Use model routing (GPT-3.5 vs GPT-4)
+    - Cache frequent responses
+    - Batch similar requests
+
+Issue_5:
+  Problem: "Users can't add subscriptions"
+  Symptoms:
+    - Form submission fails
+    - Validation errors
+  Diagnosis:
+    - Check validation rules
+    - Review error logs
+    - Test edge cases
+  Solutions:
+    - Improve error messages
+    - Add input sanitization
+    - Implement proper validation
+    - Add retry mechanism
+```
+
+### Debug Commands
+```bash
+# Check application health
+curl http://localhost:8501/health
+
+# View recent logs
+tail -f logs/app.log | grep ERROR
+
+# Database diagnostics
+python scripts/db_check.py
+
+# AI API test
+python scripts/test_openai.py
+
+# Redis connection test
+redis-cli ping
+
+# Memory usage
+ps aux | grep streamlit
+
+# Port availability
+lsof -i :8501
+
+# Environment variables
+python -c "import os; print(os.environ.get('OPENAI_API_KEY'))"
+```
+
+## 🔒 Security & Compliance
+
+### Security Requirements
+```yaml
+Authentication:
+  - Email/phone verification required
+  - Two-factor authentication (optional)
+  - Session management with timeout
+  - Password complexity requirements
+
+Data_Protection:
+  - Encryption at rest (AES-256)
+  - Encryption in transit (TLS 1.3)
+  - PII data anonymization
+  - GDPR compliance
+  - Data retention policies
+
+API_Security:
+  - Rate limiting per user
+  - API key authentication
+  - Request signing
+  - Input validation
+  - SQL injection prevention
+  - XSS protection
+
+Compliance:
+  - Privacy policy
+  - Terms of service
+  - Cookie policy
+  - Data processing agreement
+  - User consent management
+```
+
+### Security Implementation
+```python
+# core/security/security.py
+
+import hashlib
+import secrets
+import jwt
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+
+class SecurityManager:
+    """
+    Security utilities and implementations.
+    
+    @Jessica (Ops): Ensure all security best practices
+    @Sarah (TL): Regular security audits required
+    """
+    
+    def __init__(self, secret_key: str):
+        """Initialize security manager."""
+        self.secret_key = secret_key
+        self.token_expiry = timedelta(days=1)
+    
+    def hash_password(self, password: str) -> str:
+        """Hash password using bcrypt."""
+        import bcrypt
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    
+    def verify_password(self, password: str, hashed: str) -> bool:
+        """Verify password against hash."""
+        import bcrypt
+        return bcrypt.checkpw(
+            password.encode('utf-8'),
+            hashed.encode('utf-8')
+        )
+    
+    def generate_token(self, user_id: str) -> str:
+        """Generate JWT token for user."""
+        payload = {
+            'user_id': user_id,
+            'exp': datetime.utcnow() + self.token_expiry,
+            'iat': datetime.utcnow(),
+            'jti': secrets.token_urlsafe(16)
+        }
+        
+        return jwt.encode(
+            payload,
+            self.secret_key,
+            algorithm='HS256'
+        )
+    
+    def sanitize_input(self, input_str: str) -> str:
+        """Sanitize user input to prevent injection."""
+        import html
+        import re
+        
+        # HTML escape
+        sanitized = html.escape(input_str)
+        
+        # Remove SQL keywords
+        sql_keywords = ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'EXEC']
+        for keyword in sql_keywords:
+            pattern = re.compile(re.escape(keyword), re.IGNORECASE)
+            sanitized = pattern.sub('', sanitized)
+        
+        return sanitized.strip()
+```
+
+## 🔄 Continuous Improvement
+
+### Feedback Loop
+```yaml
+Collection:
+  - In-app feedback widget
+  - User interviews (weekly)
+  - Support ticket analysis
+  - Analytics data review
+  - A/B testing results
+
+Analysis:
+  - Weekly team review
+  - Feature usage metrics
+  - User satisfaction scores
+  - Bug/issue patterns
+  - Performance metrics
+
+Prioritization:
+  - Impact vs Effort matrix
+  - User request frequency
+  - Business value alignment
+  - Technical debt assessment
+
+Implementation:
+  - 2-week sprint cycles
+  - Feature flags for gradual rollout
+  - A/B testing for major changes
+  - Rollback plan for each deploy
+
+Validation:
+  - Success metrics tracking
+  - User acceptance testing
+  - Performance monitoring
+  - Error rate monitoring
+```
+
+## 📝 Documentation Standards
+
+### Documentation Workflow
+```yaml
+Documentation_Strategy:
+  Philosophy: "Code without documentation is incomplete"
+  Principle: "Document as you develop, not after"
+  Approach: "Living documentation that evolves with code"
+
+Documentation_Types:
+  Technical:
+    - requirement.md: Business and functional requirements
+    - architecture.md: System architecture and design decisions
+    - database.md: Database schema and data models
+    - ai-integration.md: AI/ML implementation details
+    - api.md: REST API endpoints and usage
+    - security.md: Security protocols and best practices
+    - testing.md: Testing strategies and procedures
+    - deployment.md: Deployment and operations guide
+
+  User_Facing:
+    - user-manual.md: End-user guide and tutorials
+    - troubleshooting.md: Common issues and solutions
+    - FAQ.md: Frequently asked questions
+
+  Design:
+    - ui-design.md: UI/UX design specifications
+    - component-library.md: Reusable component documentation
+
+Documentation_Timeline:
+  Sprint_0:
+    - requirement.md: Complete business and technical requirements
+    - architecture.md: High-level system design
+    - database.md: Data model design
+
+  Sprint_1:
+    - ui-design.md: UI component specifications
+    - ai-integration.md: AI implementation strategy
+
+  Sprint_2:
+    - ocr-system.md: OCR implementation details
+    - analytics.md: Analytics system design
+    - notification.md: Notification system architecture
+
+  Sprint_3:
+    - security.md: Security implementation guide
+    - testing.md: Comprehensive testing documentation
+    - deployment.md: Production deployment guide
+    - api.md: Complete API documentation
+    - user-manual.md: End-user documentation
+    - troubleshooting.md: Support documentation
+
+Documentation_Standards:
+  Format: Markdown with consistent structure
+  Versioning: Keep documentation in sync with code versions
+  Reviews: All documentation must be peer-reviewed
+  Updates: Update documentation with every feature change
+  Accessibility: Clear language, examples, and diagrams
+```
+
+### Code Documentation
+```python
+"""
+Documentation Standards:
+
+1. Every file must have a module docstring
+2. Every class must have a class docstring
+3. Every public method must have a docstring
+4. Use Google style docstrings
+5. Include examples for complex functions
+6. Document all exceptions raised
+7. Keep documentation up to date
+"""
+
+def example_function(
+    param1: str,
+    param2: int,
+    optional_param: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Brief description of what the function does.
+    
+    Longer description if needed, explaining the purpose,
+    algorithm, or any important details.
+    
+    Args:
+        param1: Description of param1
+        param2: Description of param2
+        optional_param: Description of optional parameter
+    
+    Returns:
+        Description of return value, including structure
+        
+    Raises:
+        ValueError: When param2 is negative
+        TypeError: When param1 is not a string
+        
+    Example:
+        >>> result = example_function("test", 42)
+        >>> print(result["status"])
+        "success"
+        
+    Note:
+        Any additional notes or warnings
+        
+    Todo:
+        * TODO(developer): Future improvements
+        * FIXME(developer): Known issues
+    """
+    pass
+```
+
+## 🎓 Learning Resources
+
+### Required Knowledge
+```yaml
+Technical_Skills:
+  Python:
+    - Core Python 3.9+
+    - Async programming
+    - Type hints
+    - Testing with pytest
+  
+  AI/ML:
+    - Prompt engineering
+    - RAG systems
+    - Vector databases
+    - LLM APIs
+  
+  Web_Development:
+    - Streamlit framework
+    - REST APIs
+    - WebSockets
+    - HTML/CSS basics
+  
+  Database:
+    - SQL fundamentals
+    - ORM (SQLAlchemy)
+    - Query optimization
+    - Migrations
+  
+  DevOps:
+    - Docker
+    - CI/CD
+    - Cloud deployment
+    - Monitoring
+
+Resources:
+  - Streamlit Documentation
+  - OpenAI API Documentation
+  - LangChain Documentation
+  - Python Best Practices
+  - AI Safety Guidelines
+```
+
+## 🤝 Collaboration Guidelines
+
+### When Working with Claude Code
+
+#### Initial Setup
+```bash
+# 1. Start a new session with Claude Code
+claude-code init
+
+# 2. Load the project context
+"Please read and understand the claude.md file in the project root"
+
+# 3. Confirm understanding
+"Confirm you understand the project structure and team roles"
+```
+
+#### Development Workflow
+```bash
+# Feature Development
+"As Emily (Developer), implement the subscription add feature according to claude.md specs"
+
+# Code Review
+"As Sarah (Tech Lead), review this code for architecture and best practices"
+
+# Testing
+"As Michael (QA), create test cases for this feature"
+
+# Optimization
+"As David (AI Engineer), optimize this prompt for cost and quality"
+
+# Deployment
+"As Jessica (DevOps), prepare this for production deployment"
+```
+
+#### Problem Solving
+```bash
+# Debug an issue
+"Following the troubleshooting guide in claude.md, help me debug this error"
+
+# Performance optimization
+"According to the performance standards in claude.md, optimize this function"
+
+# Security review
+"As Jessica (DevOps), review this code for security vulnerabilities"
+```
+
+#### Documentation
+```bash
+# Update documentation
+"Update the API documentation according to claude.md standards"
+
+# Generate examples
+"Create usage examples following the documentation standards"
+
+# Write tests
+"Generate unit tests following the testing standards in claude.md"
+```
+
+### Team Collaboration Format
+When requesting team discussions:
+
+"Let's have a team meeting about [FEATURE]. Please have each team member provide their perspective according to their role in claude.md"
+
+Expected output:
+- Alex (PM): User value and priority
+- Sarah (TL): Technical feasibility
+- David (AI): AI enhancement opportunities
+- Emily (Dev): Implementation approach
+- Michael (QA): Testing strategy
+- Jessica (Ops): Deployment considerations
+
+## 🚀 Quick Start Guide
+
+### Day 1: Environment Setup
+```bash
+# 1. Clone repository
+git clone https://github.com/yourusername/ai-subscription-butler.git
+cd ai-subscription-butler
+
+# 2. Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure environment
+cp .env.example .env
+# Edit .env with your API keys
+
+# 5. Initialize database
+python scripts/setup.py
+
+# 6. Run application
+streamlit run app/main.py
+```
+
+### Day 2-7: MVP Development
+```yaml
+Day 2:
+  - Implement basic CRUD for subscriptions
+  - Create Streamlit UI
+
+Day 3:
+  - Integrate OpenAI API
+  - Build chat interface
+
+Day 4:
+  - Add OCR functionality
+  - Implement bill recognition
+
+Day 5:
+  - Create analytics dashboard
+  - Add spending insights
+
+Day 6:
+  - Implement reminder system
+  - Add notification features
+
+Day 7:
+  - Testing and bug fixes
+  - Prepare for deployment
+```
+
+### Day 8-14: Enhancement
+```yaml
+Day 8-10:
+  - Improve AI responses
+  - Optimize prompts
+  - Add caching
+
+Day 11-12:
+  - UI/UX improvements
+  - Performance optimization
+
+Day 13-14:
+  - Deploy to production
+  - Monitor and iterate
+```
+
+## 📊 Project Management
+
+### Task Tracking
+```yaml
+Backlog:
+  - User authentication system
+  - Family subscription sharing
+  - Export/import functionality
+  - Mobile app development
+  - Advanced analytics
+  - Multi-language support
+
+In Progress:
+  - Core subscription CRUD
+  - AI chat interface
+  - OCR bill recognition
+
+Done:
+  - Project setup
+  - Database design
+  - UI framework
+
+Blocked:
+  - Payment integration (waiting for Stripe approval)
+```
+
+### Risk Management
+```yaml
+Technical Risks:
+  - OpenAI API reliability
+  - OCR accuracy on Chinese text
+  - Scaling database queries
+  Mitigation: Implement fallbacks, caching, optimization
+
+Business Risks:
+  - User adoption rate
+  - Competition from incumbents
+  - Regulatory compliance
+  Mitigation: Focus on user value, iterate quickly, legal review
+
+Operational Risks:
+  - Single developer bandwidth
+  - Cost management
+  - Security vulnerabilities
+  Mitigation: Prioritize features, monitor costs, security audits
+```
+
+## 📈 Growth Strategy
+
+### Phase 1: MVP (Month 1)
+```yaml
+Goals:
+  - 100 beta users
+  - Core features working
+  - User feedback collection
+
+Tactics:
+  - Friends and family testing
+  - Reddit/forum posts
+  - Product Hunt launch
+```
+
+### Phase 2: Growth (Month 2-3)
+```yaml
+Goals:
+  - 1,000 active users
+  - Product-market fit
+  - First revenue
+
+Tactics:
+  - Content marketing
+  - SEO optimization
+  - Referral program
+  - Paid ads testing
+```
+
+### Phase 3: Scale (Month 4-6)
+```yaml
+Goals:
+  - 10,000 users
+  - Sustainable revenue
+  - Team expansion
+
+Tactics:
+  - Partnership development
+  - B2B offerings
+  - International expansion
+  - Mobile app launch
+```
+
+## 🎯 Success Criteria
+
+### MVP Success Metrics
+```yaml
+Week 1:
+  - Development environment ready ✓
+  - Basic UI functional ✓
+  - 5 test users onboarded ✓
+
+Week 2:
+  - AI chat working ✓
+  - 10 beta users ✓
+  - 50% daily retention ✓
+
+Week 3:
+  - OCR feature complete ✓
+  - 25 beta users ✓
+  - First user feedback incorporated ✓
+
+Week 4:
+  - MVP deployed ✓
+  - 50 users registered ✓
+  - 5 paying customers ✓
+```
+
+## 📅 Version History
+
+```yaml
+Version: 1.0.0
+Date: 2024-01-20
+Author: AI Subscription Butler Team
+Status: Active Development
+
+Changes:
+  - Complete project specification
+  - Comprehensive feature documentation
+  - Full technical architecture
+  - Development workflow defined
+  - Testing and deployment guides
+  - Security and monitoring setup
+  - Troubleshooting documentation
+
+Roadmap:
+  v1.1.0: Add family sharing features
+  v1.2.0: Mobile app release
+  v2.0.0: Enterprise features
+```
+
+## 🔗 Important Links
+
+### Resources
+- [Project Repository](https://github.com/cxy630/ai-subscription-butler)
+- [Documentation](https://docs.yourdomain.com)
+- [API Reference](https://api.yourdomain.com/docs)
+- [Status Page](https://status.yourdomain.com)
+
+### External Documentation
+- [Streamlit Docs](https://docs.streamlit.io)
+- [OpenAI API](https://platform.openai.com/docs)
+- [LangChain](https://python.langchain.com)
+- [Railway Deployment](https://docs.railway.app)
+
+### Support
+- Email: support@yourdomain.com
+- Discord: [Join our community](https://discord.gg/yourinvite)
+- GitHub Issues: [Report bugs](https://github.com/cxy630/ai-subscription-butler/issues)
+
+## 💡 Final Notes
+
+### Key Principles
+1. **User First**: Every decision should benefit the user
+2. **Ship Fast**: Better to launch imperfect than never launch
+3. **Data Driven**: Let metrics guide decisions
+4. **AI Native**: Leverage AI for everything possible
+5. **Simple Design**: Complexity is the enemy of execution
+
+### For Claude Code
+When using this specification with Claude Code:
+1. Always reference this document for consistency
+2. Follow the defined roles and responsibilities
+3. Maintain code quality standards
+4. Consider all perspectives in decisions
+5. Document changes and rationale
+
+### Contact
+- Project Lead: chenxy@fortune-data.com
+- Technical Questions: Use GitHub Issues
+- Business Inquiries: chenxy@fortune-data.com
+
+---
+
+*This document is the single source of truth for the AI Subscription Butler project.*
+*It should be referenced in all development decisions and updated as the project evolves.*
+
+*Copyright © 2025 AI Subscription Butler. All rights reserved.*
+*Last Updated: 2025-09-25*
+*Next Review: 2025-10-01*
+```
+
+
