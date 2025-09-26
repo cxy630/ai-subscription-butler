@@ -357,14 +357,14 @@ class OpenAIClient:
 
         # 定义意图关键词
         intent_keywords = {
-            "spending_query": ["花费", "支出", "钱", "费用", "成本", "多少"],
-            "subscription_count": ["多少", "几个", "数量", "订阅"],
-            "cancel_request": ["取消", "停止", "删除", "退订"],
-            "optimization_advice": ["节省", "省钱", "优化", "建议", "推荐"],
-            "add_subscription": ["添加", "新增", "订阅"],
-            "category_analysis": ["分类", "类别", "分析"],
-            "trend_analysis": ["趋势", "变化", "预测"],
-            "general_help": ["帮助", "怎么", "如何", "什么"]
+            "spending_query": ["花费", "支出", "钱", "费用", "成本", "多少", "spend", "spending", "cost", "money", "much", "expense"],
+            "subscription_count": ["多少", "几个", "数量", "订阅", "how many", "count", "number", "subscription"],
+            "cancel_request": ["取消", "停止", "删除", "退订", "cancel", "stop", "delete", "unsubscribe"],
+            "optimization_advice": ["节省", "省钱", "优化", "建议", "推荐", "save", "optimize", "advice", "recommend", "suggestion"],
+            "add_subscription": ["添加", "新增", "订阅", "add", "new", "create", "subscription"],
+            "category_analysis": ["分类", "类别", "分析", "category", "analyze", "analysis"],
+            "trend_analysis": ["趋势", "变化", "预测", "trend", "change", "forecast", "predict"],
+            "general_help": ["帮助", "怎么", "如何", "什么", "help", "how", "what", "guide"]
         }
 
         # 匹配意图
