@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# 预提交钩子 - 检查敏感信息泄露
+# Pre-commit hook to prevent sensitive information leaks
+#
+
+echo "🔍 检查敏感信息..."
+
+# 检查是否有API密钥模式
+if git diff --cached --name-only | xargs grep -l "sk-[a-zA-Z0-9]\{20,\}" 2>/dev/null; then
+    echo "❌ 错误: 检测到可能的OpenAI API密钥！"
+    echo "   请移除代码中的硬编码API密钥，使用环境变量代替。"
+    exit 1
+fi
+
+# 检查是否意外添加了.env文件
+if git diff --cached --name-only | grep -q "^\.env$"; then
+    echo "❌ 错误: 试图提交.env文件！"
+    echo "   .env文件包含敏感信息，不应提交到Git。"
+    echo "   使用: git reset HEAD .env"
+    exit 1
+fi
+
+# 检查其他敏感文件模式
+SENSITIVE_PATTERNS="
+secrets/
+*.key
+*.pem
+config/production.py
+.env.local
+.env.production
+"
+
+for pattern in $SENSITIVE_PATTERNS; do
+    if git diff --cached --name-only | grep -q "$pattern"; then
+        echo "❌ 错误: 试图提交敏感文件: $pattern"
+        echo "   此类文件可能包含敏感信息，不应提交到Git。"
+        exit 1
+    fi
+done
+
+# 检查常见的敏感信息模式
+SENSITIVE_REGEX="
+password\s*=\s*['\"][^'\"]+['\"]
+api_key\s*=\s*['\"][^'\"]+['\"]
+secret\s*=\s*['\"][^'\"]+['\"]
+token\s*=\s*['\"][^'\"]+['\"]
+"
+
+for regex in $SENSITIVE_REGEX; do
+    if git diff --cached | grep -i "$regex" 2>/dev/null; then
+        echo "⚠️ 警告: 检测到可能的敏感信息模式"
+        echo "   请确认不包含真实的密码、密钥或令牌。"
+        echo "   如果确认安全，请忽略此警告。"
+        echo "   继续提交吗? (y/N)"
+        read -r response
+        if [ "$response" != "y" ] && [ "$response" != "Y" ]; then
+            echo "提交已取消"
+            exit 1
+        fi
+        break
+    fi
+done
+
+echo "✅ 安全检查通过"
+exit 0

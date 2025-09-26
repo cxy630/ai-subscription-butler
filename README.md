@@ -45,11 +45,17 @@ An AI-powered subscription management assistant that helps users discover, manag
    pip install -r requirements.txt
    ```
 
-4. **Set up environment variables**
+4. **Set up environment variables** 🔑
    ```bash
    cp .env.example .env
-   # Edit .env with your OpenAI API key and other settings
+   # 编辑.env文件，添加你的OpenAI API密钥
+   # OPENAI_API_KEY=sk-your-api-key-here
    ```
+
+   ⚠️ **安全提醒**:
+   - **绝不要**将包含真实API密钥的`.env`文件提交到Git
+   - 项目已正确配置`.gitignore`来保护敏感文件
+   - 查看 [SECURITY.md](SECURITY.md) 了解完整安全指南
 
 5. **Initialize database**
    ```bash
