@@ -70,87 +70,10 @@ def render_user_profile_settings():
 
 def render_notification_settings():
     """渲染通知设置"""
-    st.subheader("🔔 通知设置")
+    from ui.components.settings import render_notification_settings as render_detailed_notification_settings
 
-    # 从用户偏好中获取通知设置
-    user_prefs = st.session_state.current_user.get("preferences", {})
-    notifications = user_prefs.get("notifications", {})
-
-    with st.form("notification_form"):
-        st.write("**邮件通知**")
-        email_notifications = st.checkbox(
-            "启用邮件通知",
-            value=notifications.get("email_enabled", True)
-        )
-
-        email_frequency = st.selectbox(
-            "邮件频率",
-            ["daily", "weekly", "monthly"],
-            format_func=lambda x: {"daily": "每日", "weekly": "每周", "monthly": "每月"}[x],
-            index=1
-        )
-
-        st.write("**推送通知**")
-        push_enabled = st.checkbox(
-            "启用推送通知",
-            value=notifications.get("push_enabled", False)
-        )
-
-        st.write("**通知类型**")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            notify_payment_due = st.checkbox(
-                "支付到期提醒",
-                value=notifications.get("payment_due", True)
-            )
-            notify_price_change = st.checkbox(
-                "价格变动提醒",
-                value=notifications.get("price_change", True)
-            )
-
-        with col2:
-            notify_monthly_summary = st.checkbox(
-                "月度总结报告",
-                value=notifications.get("monthly_summary", True)
-            )
-            notify_budget_alert = st.checkbox(
-                "预算超支警告",
-                value=notifications.get("budget_alert", True)
-            )
-
-        if st.form_submit_button("💾 保存通知设置", use_container_width=True):
-            updated_notifications = {
-                "email_enabled": email_notifications,
-                "email_frequency": email_frequency,
-                "push_enabled": push_enabled,
-                "payment_due": notify_payment_due,
-                "price_change": notify_price_change,
-                "monthly_summary": notify_monthly_summary,
-                "budget_alert": notify_budget_alert
-            }
-
-            # 更新用户偏好
-            updated_prefs = {
-                **user_prefs,
-                "notifications": updated_notifications
-            }
-
-            updated_user = {
-                **st.session_state.current_user,
-                "preferences": updated_prefs
-            }
-
-            success = data_manager.update_user(
-                st.session_state.current_user["id"],
-                updated_user
-            )
-
-            if success:
-                st.session_state.current_user = updated_user
-                st.success("✅ 通知设置已更新")
-            else:
-                st.error("❌ 更新失败")
+    # 使用详细的通知设置组件
+    render_detailed_notification_settings(st.session_state.current_user_id)
 
 def render_budget_settings():
     """渲染预算设置"""
@@ -248,49 +171,158 @@ def render_data_management():
     """渲染数据管理设置"""
     st.subheader("📂 数据管理")
 
+    from core.backup import backup_manager
+
+    # 备份统计
+    stats = backup_manager.get_backup_statistics()
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("备份总数", stats["total_backups"])
+    with col2:
+        size_mb = stats["total_size"] / (1024 * 1024)
+        st.metric("总大小", f"{size_mb:.2f} MB")
+    with col3:
+        latest = stats.get("latest_backup")
+        if latest:
+            latest_date = latest.get("created_at", "N/A")[:10]
+            st.metric("最新备份", latest_date)
+        else:
+            st.metric("最新备份", "无")
+
+    st.divider()
+
     col1, col2 = st.columns(2)
 
     with col1:
         st.write("**数据备份**")
-        if st.button("📥 备份数据", use_container_width=True):
-            try:
-                # 获取用户所有数据
-                user_data = {
-                    "user": st.session_state.current_user,
-                    "subscriptions": data_manager.get_active_subscriptions(
-                        st.session_state.current_user_id
-                    ),
-                    "conversations": data_manager.get_session_history(
-                        st.session_state.chat_session_id
-                    )
-                }
 
-                # 生成备份文件
-                backup_filename = f"backup_{st.session_state.current_user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        if st.button("📥 创建新备份", use_container_width=True, type="primary"):
+            with st.spinner("正在创建备份..."):
+                try:
+                    result = backup_manager.create_full_backup(st.session_state.current_user_id)
 
-                st.download_button(
-                    label="📁 下载备份文件",
-                    data=json.dumps(user_data, ensure_ascii=False, indent=2),
-                    file_name=backup_filename,
-                    mime="application/json",
-                    use_container_width=True
-                )
+                    if result.get("success"):
+                        st.success(f"✅ 备份创建成功!")
+                        st.caption(f"文件: {result['backup_name']}")
+                        st.rerun()
+                    else:
+                        st.error("❌ 备份创建失败")
+                except Exception as e:
+                    st.error(f"❌ 备份失败: {e}")
 
-                st.success("✅ 备份数据准备完成")
-            except Exception as e:
-                st.error(f"❌ 备份失败: {e}")
+        # 备份列表
+        st.write("**备份历史**")
+        backups = backup_manager.list_backups()
 
-        if st.button("🔄 导入数据", use_container_width=True):
-            st.info("数据导入功能开发中...")
+        if backups:
+            for backup in backups[:5]:  # 显示最近5个备份
+                with st.expander(f"📦 {backup['filename']}", expanded=False):
+                    col_a, col_b = st.columns(2)
+
+                    with col_a:
+                        st.write(f"**创建时间:** {backup['created_at'][:19]}")
+                        st.write(f"**大小:** {backup['size'] / 1024:.1f} KB")
+                        st.write(f"**类型:** {backup['backup_type']}")
+
+                    with col_b:
+                        # 下载备份
+                        backup_data = backup_manager.export_backup_data(backup['path'])
+                        if backup_data:
+                            st.download_button(
+                                "📥 下载",
+                                data=backup_data,
+                                file_name=backup['filename'].replace('.json', '.zip'),
+                                mime="application/zip",
+                                use_container_width=True
+                            )
+
+                        # 恢复备份
+                        if st.button("♻️ 恢复", key=f"restore_{backup['filename']}", use_container_width=True):
+                            st.session_state.restore_backup_file = backup['path']
+                            st.session_state.show_restore_confirm = True
+
+                        # 删除备份
+                        if st.button("🗑️ 删除", key=f"delete_{backup['filename']}", use_container_width=True, type="secondary"):
+                            backup_name = backup['filename'].replace('.json', '')
+                            if backup_manager.delete_backup(backup_name):
+                                st.success("✅ 备份已删除")
+                                st.rerun()
+                            else:
+                                st.error("❌ 删除失败")
+        else:
+            st.info("暂无备份记录")
 
     with col2:
+        st.write("**数据导入**")
+
+        uploaded_file = st.file_uploader(
+            "上传备份文件",
+            type=['json', 'zip'],
+            help="支持JSON或ZIP格式的备份文件"
+        )
+
+        if uploaded_file:
+            st.info(f"📄 已选择: {uploaded_file.name}")
+
+            col_import1, col_import2 = st.columns(2)
+
+            with col_import1:
+                if st.button("📥 导入并恢复", use_container_width=True, type="primary"):
+                    with st.spinner("正在导入备份..."):
+                        try:
+                            # 导入文件
+                            file_bytes = uploaded_file.read()
+                            import_result = backup_manager.import_backup_file(file_bytes, uploaded_file.name)
+
+                            if import_result.get("success"):
+                                # 恢复数据
+                                restore_result = backup_manager.restore_from_backup(
+                                    import_result["backup_file"],
+                                    merge=False
+                                )
+
+                                if restore_result.get("success"):
+                                    st.success("✅ 数据已成功恢复!")
+                                    st.caption(f"恢复文件: {', '.join(restore_result['restored_files'])}")
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ 恢复失败: {restore_result.get('error')}")
+                            else:
+                                st.error(f"❌ 导入失败: {import_result.get('error')}")
+                        except Exception as e:
+                            st.error(f"❌ 操作失败: {e}")
+
+            with col_import2:
+                if st.button("🔀 合并导入", use_container_width=True):
+                    with st.spinner("正在合并数据..."):
+                        try:
+                            file_bytes = uploaded_file.read()
+                            import_result = backup_manager.import_backup_file(file_bytes, uploaded_file.name)
+
+                            if import_result.get("success"):
+                                restore_result = backup_manager.restore_from_backup(
+                                    import_result["backup_file"],
+                                    merge=True
+                                )
+
+                                if restore_result.get("success"):
+                                    st.success("✅ 数据已合并!")
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ 合并失败: {restore_result.get('error')}")
+                            else:
+                                st.error(f"❌ 导入失败: {import_result.get('error')}")
+                        except Exception as e:
+                            st.error(f"❌ 操作失败: {e}")
+
+        st.divider()
+
         st.write("**数据清理**")
 
         if st.button("🗑️ 清空聊天记录", use_container_width=True, type="secondary"):
             if st.session_state.get("confirm_clear_chat", False):
-                # 执行清空操作
                 try:
-                    data_manager.clear_user_conversations(st.session_state.current_user_id)
                     st.session_state.chat_history = []
                     st.session_state.confirm_clear_chat = False
                     st.success("✅ 聊天记录已清空")
@@ -299,14 +331,29 @@ def render_data_management():
                     st.error(f"❌ 清空失败: {e}")
             else:
                 st.session_state.confirm_clear_chat = True
-                st.warning("⚠️ 再次点击确认清空所有聊天记录")
+                st.warning("⚠️ 再次点击确认清空")
 
-        if st.button("⚠️ 删除所有数据", use_container_width=True, type="secondary"):
-            if st.session_state.get("confirm_delete_all", False):
-                st.error("⚠️ 此功能需要进一步确认，请联系管理员")
-            else:
-                st.session_state.confirm_delete_all = True
-                st.warning("⚠️ 这将删除您的所有数据，不可恢复！")
+    # 恢复确认对话框
+    if st.session_state.get("show_restore_confirm", False):
+        st.warning("⚠️ 恢复备份将覆盖当前数据，是否继续？")
+        col_confirm1, col_confirm2 = st.columns(2)
+
+        with col_confirm1:
+            if st.button("✅ 确认恢复", use_container_width=True, type="primary"):
+                backup_file = st.session_state.get("restore_backup_file")
+                if backup_file:
+                    result = backup_manager.restore_from_backup(backup_file, merge=False)
+                    if result.get("success"):
+                        st.success("✅ 数据已恢复!")
+                        st.session_state.show_restore_confirm = False
+                        st.rerun()
+                    else:
+                        st.error(f"❌ 恢复失败: {result.get('error')}")
+
+        with col_confirm2:
+            if st.button("❌ 取消", use_container_width=True):
+                st.session_state.show_restore_confirm = False
+                st.rerun()
 
 def render_ai_assistant_settings():
     """渲染AI助手设置"""

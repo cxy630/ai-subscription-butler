@@ -24,7 +24,17 @@ class Settings(BaseSettings):
     db_pool_size: int = Field(default=5, env="DB_POOL_SIZE")
     db_max_overflow: int = Field(default=10, env="DB_MAX_OVERFLOW")
 
-    # OpenAI
+    # AI Provider
+    ai_provider: str = Field(default="gemini", env="AI_PROVIDER")  # gemini|openai
+
+    # Gemini
+    gemini_api_key: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
+    gemini_model: str = Field(default="gemini-3.0-flash", env="GEMINI_MODEL")
+    gemini_max_tokens: int = Field(default=1000, env="GEMINI_MAX_TOKENS")
+    gemini_temperature: float = Field(default=0.7, env="GEMINI_TEMPERATURE")
+    gemini_request_timeout: int = Field(default=30, env="GEMINI_REQUEST_TIMEOUT")
+
+    # OpenAI (fallback)
     openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
     openai_org_id: Optional[str] = Field(default=None, env="OPENAI_ORG_ID")
     openai_model_chat: str = Field(default="gpt-3.5-turbo", env="OPENAI_MODEL_CHAT")
@@ -105,6 +115,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = "ignore"  # Ignore extra fields in .env
 
 
 # Create global settings instance

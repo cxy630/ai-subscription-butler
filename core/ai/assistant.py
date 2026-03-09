@@ -8,7 +8,9 @@ from datetime import datetime, timedelta
 import logging
 
 from .openai_client import OpenAIClient, get_openai_client, is_openai_available
+from .gemini_client import GeminiClient, get_gemini_client, is_gemini_available
 from .config import get_ai_config, AIConfig
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +25,28 @@ class AIAssistant:
             config: AI配置，如果为None则使用默认配置
         """
         self.config = config or get_ai_config()
-        self.openai_client = get_openai_client() if self.config.is_valid() else None
+
+        # 根据配置选择AI提供商
+        self.ai_provider = getattr(settings, 'ai_provider', 'gemini')
+
+        if self.ai_provider == 'gemini':
+            self.ai_client = get_gemini_client() if is_gemini_available() else None
+            self.provider_name = "Gemini"
+        else:
+            self.ai_client = get_openai_client() if self.config.is_valid() else None
+            self.provider_name = "OpenAI"
+
+        # 保持向后兼容
+        self.openai_client = self.ai_client if self.ai_provider == 'openai' else None
+
         self.request_count = 0
         self.last_reset_date = datetime.now().date()
 
-        logger.info(f"AI助手初始化完成，OpenAI可用: {self.is_available()}")
+        logger.info(f"AI助手初始化完成，使用{self.provider_name}，可用: {self.is_available()}")
 
     def is_available(self) -> bool:
         """检查AI助手是否可用"""
-        return self.openai_client is not None and self._check_rate_limit()
+        return self.ai_client is not None and self._check_rate_limit()
 
     def _check_rate_limit(self) -> bool:
         """检查速率限制"""
@@ -76,12 +91,19 @@ class AIAssistant:
                 # 限制历史长度
                 conversation_history = conversation_history[-self.config.max_conversation_history:]
 
-            # 调用OpenAI客户端
-            response = await self.openai_client.get_ai_response(
-                user_message=user_message,
-                user_context=user_context,
-                conversation_history=conversation_history
-            )
+            # 调用AI客户端
+            if self.ai_provider == 'gemini':
+                response = await self.ai_client.get_ai_response(
+                    user_message=user_message,
+                    user_context=user_context,
+                    user_id=user_context.get('user', {}).get('id', 'default')
+                )
+            else:
+                response = await self.ai_client.get_ai_response(
+                    user_message=user_message,
+                    user_context=user_context,
+                    conversation_history=conversation_history
+                )
 
             # 记录成功响应
             logger.info(f"AI响应成功，使用tokens: {response.get('tokens_used', 0)}")
@@ -109,12 +131,19 @@ class AIAssistant:
             if conversation_history and self.config.enable_conversation_memory:
                 conversation_history = conversation_history[-self.config.max_conversation_history:]
 
-            # 调用OpenAI客户端（同步版本）
-            response = self.openai_client.get_ai_response_sync(
-                user_message=user_message,
-                user_context=user_context,
-                conversation_history=conversation_history
-            )
+            # 调用AI客户端（同步版本）
+            if self.ai_provider == 'gemini':
+                response = self.ai_client.get_ai_response_sync(
+                    user_message=user_message,
+                    user_context=user_context,
+                    user_id=user_context.get('user', {}).get('id', 'default')
+                )
+            else:
+                response = self.ai_client.get_ai_response_sync(
+                    user_message=user_message,
+                    user_context=user_context,
+                    conversation_history=conversation_history
+                )
 
             logger.info(f"AI响应成功，使用tokens: {response.get('tokens_used', 0)}")
             return response
@@ -139,8 +168,12 @@ class AIAssistant:
         try:
             self._increment_request_count()
 
-            # 调用OpenAI生成洞察
-            insights = await self.openai_client.generate_insights(user_context)
+            # 调用AI客户端生成洞察
+            if self.ai_provider == 'gemini':
+                # Gemini暂时使用默认洞察，后续可扩展
+                insights = self._get_default_insights(user_context)
+            else:
+                insights = await self.ai_client.generate_insights(user_context)
 
             logger.info(f"智能洞察生成成功，共{len(insights)}条")
             return insights
@@ -248,10 +281,17 @@ class AIAssistant:
 
     def get_status(self) -> Dict[str, Any]:
         """获取AI助手状态信息"""
+        if self.ai_provider == 'gemini':
+            model_name = getattr(settings, 'gemini_model', 'gemini-3.0-flash')
+        else:
+            model_name = self.config.openai_model
+
         return {
             "available": self.is_available(),
-            "openai_configured": self.openai_client is not None,
-            "model": self.config.openai_model,
+            "provider": self.ai_provider,
+            "provider_configured": self.ai_client is not None,
+            "openai_configured": self.openai_client is not None,  # 保持向后兼容
+            "model": model_name,
             "daily_requests_used": self.request_count,
             "daily_limit": self.config.max_daily_requests,
             "features": {
@@ -259,7 +299,7 @@ class AIAssistant:
                 "conversation_memory": self.config.enable_conversation_memory,
                 "fallback_responses": self.config.enable_fallback_responses
             },
-            "config": self.config.to_dict()
+            "config": self.config.to_dict() if hasattr(self.config, 'to_dict') else {}
         }
 
     def reset_daily_limit(self):

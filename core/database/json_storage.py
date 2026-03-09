@@ -158,9 +158,12 @@ class SubscriptionStorage(BaseJSONStorage):
         return subscription
 
     def get_user_subscriptions(self, user_id: str) -> List[Dict[str, Any]]:
-        """获取用户的所有订阅"""
+        """获取用户的所有订阅（默认按创建时间降序排列）"""
         subscriptions = self._load_data()
-        return [sub for sub in subscriptions if sub["user_id"] == user_id]
+        user_subs = [sub for sub in subscriptions if sub["user_id"] == user_id]
+        # 按创建时间降序排序（最新的在前）
+        user_subs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return user_subs
 
     def get_subscription_by_id(self, subscription_id: str) -> Optional[Dict[str, Any]]:
         """根据ID获取订阅"""
@@ -192,8 +195,9 @@ class SubscriptionStorage(BaseJSONStorage):
         return False
 
     def get_active_subscriptions(self, user_id: str) -> List[Dict[str, Any]]:
-        """获取用户活跃订阅"""
+        """获取用户活跃订阅（默认按创建时间降序排列）"""
         subscriptions = self.get_user_subscriptions(user_id)
+        # get_user_subscriptions 已经按创建时间降序排序，这里只需过滤状态
         return [sub for sub in subscriptions if sub.get("status", "active") == "active"]
 
 
@@ -284,6 +288,54 @@ class DataManager:
         self.subscriptions = SubscriptionStorage(data_dir)
         self.conversations = ConversationStorage(data_dir)
         self.ocr_records = OCRStorage(data_dir)
+
+    # User management methods
+    def create_user(self, email: str, password_hash: str, name: str = None) -> Dict[str, Any]:
+        """创建用户"""
+        return self.users.create_user(email, password_hash, name)
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """根据邮箱获取用户"""
+        return self.users.get_user_by_email(email)
+
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """根据ID获取用户"""
+        return self.users.get_user_by_id(user_id)
+
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        """更新用户信息"""
+        return self.users.update_user(user_id, updates)
+
+    # Subscription management methods
+    def create_subscription(self, user_id: str, subscription_data: Dict[str, Any]) -> Dict[str, Any]:
+        """创建订阅"""
+        return self.subscriptions.create_subscription(user_id, subscription_data)
+
+    def get_user_subscriptions(self, user_id: str) -> List[Dict[str, Any]]:
+        """获取用户所有订阅"""
+        return self.subscriptions.get_user_subscriptions(user_id)
+
+    def get_active_subscriptions(self, user_id: str) -> List[Dict[str, Any]]:
+        """获取用户活跃订阅"""
+        return self.subscriptions.get_active_subscriptions(user_id)
+
+    def update_subscription(self, subscription_id: str, updates: Dict[str, Any]) -> bool:
+        """更新订阅"""
+        return self.subscriptions.update_subscription(subscription_id, updates)
+
+    def delete_subscription(self, subscription_id: str) -> bool:
+        """删除订阅"""
+        return self.subscriptions.delete_subscription(subscription_id)
+
+    # Conversation management methods
+    def save_conversation(self, user_id: str, session_id: str, message: str,
+                         response: str, intent: str = None, confidence: float = None) -> Dict[str, Any]:
+        """保存对话记录"""
+        return self.conversations.save_conversation(user_id, session_id, message, response, intent, confidence)
+
+    def get_session_history(self, session_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """获取会话历史"""
+        return self.conversations.get_session_history(session_id, limit)
 
     def get_user_overview(self, user_id: str) -> Dict[str, Any]:
         """获取用户概览信息"""

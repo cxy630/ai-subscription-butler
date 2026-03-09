@@ -74,11 +74,12 @@
 - **PWA**: 渐进式Web应用，提供类原生体验
 
 #### 2.2.2 业务逻辑层 (Business Logic Layer)
-- **AI对话引擎**: 自然语言处理和响应生成
-- **订阅管理服务**: 核心业务逻辑
-- **OCR处理服务**: 账单图像识别
-- **分析引擎**: 数据分析和洞察生成
-- **通知服务**: 提醒和通知管理
+- **AI对话引擎**: 基于Gemini 2.5 Flash Lite的自然语言处理和响应生成
+- **订阅管理服务**: 核心业务逻辑(CRUD、分类管理、状态跟踪)
+- **OCR处理服务**: 账单图像识别(三步工作流程)
+- **分析引擎**: 数据分析和洞察生成(支出趋势、分类洞察)
+- **提醒服务**: 智能提醒系统(日期计算、优先级评估、通知生成)
+- **数据导出服务**: 多格式数据导出(CSV、JSON)
 
 #### 2.2.3 数据访问层 (Data Access Layer)
 - **ORM映射**: SQLAlchemy数据模型
@@ -136,7 +137,10 @@ ui/
 │   ├── home.py         # 首页
 │   ├── chat_page.py    # AI聊天页
 │   ├── analytics_page.py # 分析页
-│   └── settings_page.py # 设置页
+│   ├── settings_page.py # 设置页
+│   ├── add_subscription_page.py  # 添加订阅独立页面 (2025-10-01新增)
+│   ├── template_page.py          # 模板选择独立页面 (2025-10-01新增)
+│   └── scan_bill_page.py         # 扫描账单独立页面 (2025-10-01新增)
 └── styles/
     └── custom.css      # 自定义样式
 ```
@@ -937,6 +941,153 @@ class NotificationPlugin:
 
 ### 10.2 架构演进
 
+## 8. 最新功能架构 (2025-09-30)
+
+### 8.1 智能提醒系统 (core/services/reminder_system.py)
+
+#### 8.1.1 系统架构
+```python
+class ReminderSystem:
+    """智能提醒系统核心类"""
+
+    def calculate_next_billing_date(self, start_date, billing_cycle):
+        """
+        智能计算下次续费日期
+        - 处理月末边界情况(Jan 31 → Feb 28)
+        - 支持闰年计算
+        - 多种计费周期(daily/weekly/monthly/yearly)
+        """
+
+    def generate_reminders(self, subscriptions, reminder_days=[7, 3, 1, 0]):
+        """
+        生成优先级提醒列表
+        Priority Logic:
+        - urgent:  days < 0 (已逾期)
+        - high:    days == 0 (今天)
+        - medium:  0 < days <= 3 (3天内)
+        - low:     days > 3 (3天后)
+        """
+
+    def get_upcoming_renewals(self, subscriptions, days_ahead=30):
+        """获取未来N天内即将续费的订阅"""
+
+    def get_reminder_statistics(self, subscriptions):
+        """生成提醒统计数据"""
+```
+
+#### 8.1.2 关键算法
+**月末日期处理:**
+```python
+# 示例: 订阅开始日期为1月31日
+start_date = datetime(2025, 1, 31)
+# monthly cycle后自动调整为2月28日
+next_date = datetime(2025, 2, 28)  # 非闰年
+next_date = datetime(2024, 2, 29)  # 闰年
+```
+
+### 8.2 数据分析与导出
+
+#### 8.2.1 支出趋势分析 (ui/components/dashboard.py:337-391)
+```python
+def render_spending_trends():
+    """
+    展示未来6个月支出趋势
+    - 基于当前订阅数据模拟
+    - Plotly折线图交互展示
+    - 支持多货币汇总
+    """
+```
+
+#### 8.2.2 分类洞察 (ui/components/dashboard.py:393-422)
+```python
+def render_category_insights():
+    """
+    分类详细分析
+    - 饼图展示占比
+    - 可展开查看服务列表
+    - 统计每个分类的订阅数和总成本
+    """
+```
+
+#### 8.2.3 数据导出 (ui/components/dashboard.py:658-749)
+```python
+def export_data(format='csv'):
+    """
+    多格式数据导出
+    Supported Formats:
+    - CSV: 表格数据,适合Excel分析
+    - JSON: 结构化数据,适合程序处理
+    - PDF: 详细报告(计划中)
+
+    Export Fields:
+    - 基本信息: 服务名、价格、周期
+    - 日期信息: 订阅日期、续费日期
+    - 分类信息: category, status
+    - 备注: notes
+    """
+```
+
+### 8.3 内联编辑功能
+
+#### 8.3.1 手风琴式UI (ui/components/dashboard.py:197-205)
+```python
+# 订阅列表渲染逻辑
+for subscription in subscriptions:
+    render_subscription_card(subscription)  # 卡片显示
+
+    # 如果编辑状态为True,在卡片下方展开编辑表单
+    if st.session_state.get(f"edit_subscription_{sub['id']}", False):
+        render_inline_edit_form(subscription)  # 内联编辑表单
+```
+
+#### 8.3.2 状态管理
+```python
+# Button-based toggle with st.rerun()
+if editing:
+    if st.button("❌ 取消"):
+        st.session_state[edit_key] = False
+        st.rerun()  # 触发页面重渲染
+else:
+    if st.button("✏️ 编辑"):
+        st.session_state[edit_key] = True
+        st.rerun()  # 立即展开编辑表单
+```
+
+#### 8.3.3 UI设计特性
+- 绿色左边框突出编辑区域
+- 完整表单字段(与添加订阅一致)
+- 三个操作按钮: 💾 保存 | ❌ 取消 | 🗑️ 删除
+- 编辑状态下按钮切换为"取消"
+
+### 8.4 技术栈更新
+
+#### 8.4.1 AI模型切换
+```
+OpenAI GPT → Google Gemini 2.5 Flash Lite
+Reasons:
+- 更低的API成本
+- 更快的响应速度
+- 多模态能力(文本+图像)
+- 免费配额充足
+```
+
+#### 8.4.2 数据存储
+```
+PostgreSQL (计划) → JSON File Storage (当前)
+Reasons for JSON:
+- 快速原型开发
+- 无需数据库配置
+- 易于版本控制
+- 足够支撑MVP阶段
+
+Migration Path:
+Phase 1: JSON files (current)
+Phase 2: SQLite (growth)
+Phase 3: PostgreSQL (scale)
+```
+
+## 9. 架构演进
+
 随着项目发展，本文档将持续更新：
 - 每月架构评审
 - 重大变更时更新
@@ -944,10 +1095,563 @@ class NotificationPlugin:
 
 ---
 
-**文档状态**: 草稿
-**下次审核**: [待安排]
+## 10. 独立页面架构 (2025-10-01新增)
+
+### 10.1 页面导航架构升级
+
+从**模态窗口模式**升级为**独立页面模式**,改善用户体验和代码可维护性。
+
+#### 10.1.1 架构对比
+
+**改进前 (模态窗口)**:
+```python
+# 在侧边栏按钮点击后设置session state标志
+if st.button("添加订阅"):
+    st.session_state.show_add_modal = True
+
+# 在当前页面底部条件渲染模态窗口
+if st.session_state.get("show_add_modal"):
+    render_add_subscription_modal()  # 内联显示
+```
+
+**改进后 (独立页面)**:
+```python
+# 在侧边栏按钮点击后切换页面
+if st.button("添加订阅"):
+    st.session_state.current_page = "添加订阅"
+    st.rerun()
+
+# 在主路由器中处理页面渲染
+def render_main_content():
+    if current_page == "添加订阅":
+        render_add_subscription_page()  # 完整页面渲染
+```
+
+#### 10.1.2 页面路由实现 (app/main.py)
+
+```python
+def render_main_content():
+    """主内容渲染路由"""
+    render_reminder_banner()  # 全局提醒横幅
+    current_page = st.session_state.current_page
+
+    # 核心页面路由
+    if current_page == "首页":
+        render_home_page()
+    elif current_page == "数据概览":
+        render_dashboard()
+    elif current_page == "AI助手":
+        render_chat_page()
+    elif current_page == "数据分析":
+        render_analytics_page()
+    elif current_page == "系统设置":
+        render_settings_page()
+
+    # 独立功能页面路由 (2025-10-01新增)
+    elif current_page == "添加订阅":
+        render_add_subscription_page()
+    elif current_page == "从模板添加":
+        render_template_page()
+    elif current_page == "扫描账单":
+        render_scan_bill_page()
+```
+
+### 10.2 独立页面实现
+
+#### 10.2.1 添加订阅页面 (ui/pages/add_subscription_page.py)
+
+**文件结构:**
+```python
+"""添加订阅页面 - 独立页面用于添加新订阅"""
+
+def render_add_subscription_page():
+    """渲染添加订阅页面"""
+    st.title("➕ 添加新订阅")
+    st.markdown("填写以下信息以添加新的订阅服务")
+
+    with st.form("add_subscription_form_page"):
+        # 表单字段定义
+        col1, col2 = st.columns(2)
+        with col1:
+            service_name = st.text_input("服务名称*")
+            price = st.number_input("价格*")
+        with col2:
+            currency = st.selectbox("币种", ["CNY", "USD", ...])
+            billing_cycle = st.selectbox("付费周期*", [...])
+
+        # 表单提交按钮(只能用form_submit_button)
+        submitted = st.form_submit_button("✅ 添加订阅")
+
+        if submitted:
+            # 数据验证和保存
+            result = data_manager.create_subscription(user_id, data)
+            if result:
+                st.success("✅ 成功添加订阅")
+                st.info("💡 可以继续添加或通过左侧菜单查看数据概览")
+```
+
+**关键设计点:**
+- 独立的页面文件,不依赖其他组件
+- 使用 `st.form()` 统一表单提交
+- 成功后不使用按钮导航,引导用户使用菜单
+- 避免 Streamlit 表单约束问题
+
+#### 10.2.2 模板选择页面 (ui/pages/template_page.py)
+
+**两阶段状态机:**
+```python
+def render_template_page():
+    """模板选择主页面"""
+    # 状态1: 显示模板表单
+    if st.session_state.get("show_template_form_page", False):
+        render_template_form_page()
+        return
+
+    # 状态2: 显示模板列表
+    # 搜索和筛选
+    search_query = st.text_input("🔍 搜索服务", key="template_search_page")
+    selected_category = st.selectbox("分类筛选", [...], key="category_select_page")
+
+    # 3列卡片布局
+    cols_per_row = 3
+    for i in range(0, len(templates), cols_per_row):
+        cols = st.columns(cols_per_row)
+        for col, (name, template) in zip(cols, templates):
+            with col:
+                st.markdown(f"### {template['icon']} {name}")
+                if st.button("➕ 选择", key=f"select_template_page_{name}"):
+                    st.session_state.selected_template_page = name
+                    st.session_state.show_template_form_page = True
+                    st.rerun()
+
+def render_template_form_page():
+    """模板确认表单页面"""
+    template = get_template(st.session_state.selected_template_page)
+    # 预填充模板数据的表单...
+```
+
+**关键特性:**
+- 两阶段工作流: 选择 → 确认
+- 独立的widget key命名(`_page`后缀)
+- 状态管理使用session_state
+
+#### 10.2.3 扫描账单页面 (ui/pages/scan_bill_page.py)
+
+**三步OCR流程:**
+```python
+def render_scan_bill_page():
+    """扫描账单主页面"""
+    st.title("📱 扫描账单")
+
+    # 步骤1: 文件上传
+    uploaded_file = st.file_uploader("上传账单图片", type=['png', 'jpg', 'jpeg', 'pdf'])
+
+    if uploaded_file:
+        # 步骤2: OCR识别
+        if st.button("🔍 开始识别"):
+            gemini_client = get_gemini_client()
+            ocr_result = gemini_client.analyze_bill_image(file_bytes, file_type)
+            st.session_state.ocr_result = ocr_result
+            st.session_state.ocr_step = "confirm"
+
+        # 步骤2.5: 确认识别结果
+        if st.session_state.get("ocr_step") == "confirm":
+            st.subheader("📋 识别结果确认")
+            st.info(f"识别描述: {ocr_result['description']}")
+            if st.button("✅ 确认识别结果"):
+                st.session_state.ocr_step = "form"
+                st.rerun()
+
+        # 步骤3: 填入表单
+        if st.session_state.get("ocr_step") == "form":
+            with st.form("ocr_result_form"):
+                service_name = st.text_input("服务名称", value=recognized_data.get("service_name"))
+                # ... 其他表单字段
+                submitted = st.form_submit_button("✅ 添加订阅")
+                if submitted:
+                    data_manager.create_subscription(user_id, subscription_data)
+```
+
+**技术亮点:**
+- 使用Gemini 2.5 Flash Lite多模态能力
+- 三步状态机: upload → confirm → form
+- 支持置信度显示和手动调整
+- 错误处理和降级方案
+
+### 10.3 Widget Key 冲突解决
+
+**问题:** 新建独立页面与原有模态组件使用相同的widget key导致冲突
+
+**解决方案:** 统一命名规范
+```python
+# 原有模态组件 (components/*)
+key="template_search"
+key="category_select"
+key=f"add_template_{service_name}"
+
+# 新建独立页面 (pages/*_page.py)
+key="template_search_page"
+key="category_select_page"
+key=f"select_template_page_{service_name}"
+```
+
+### 10.4 Streamlit 表单约束处理
+
+**约束:**
+- `st.form()` 内部只能使用 `st.form_submit_button()`
+- 不能使用普通 `st.button()` 或其他交互组件
+
+**典型错误:**
+```python
+with st.form("my_form"):
+    submitted = st.form_submit_button("提交")
+    if submitted and result:
+        # ❌ 错误: 不能在表单内使用button
+        if st.button("继续添加"):
+            st.rerun()
+```
+
+**修复方案:**
+```python
+with st.form("my_form"):
+    submitted = st.form_submit_button("提交")
+    if submitted:
+        if result:
+            st.success("✅ 成功!")
+            st.info("💡 可以继续添加订阅,或通过左侧菜单查看数据概览")
+            # ✅ 不使用按钮,引导用户使用菜单导航
+```
+
+### 10.5 架构优势
+
+**相比模态窗口的改进:**
+
+| 维度 | 模态窗口 | 独立页面 |
+|-----|---------|---------|
+| 用户体验 | 内容在当前页面下方,不够清晰 | 完整页面切换,边界清晰 |
+| 代码组织 | 组件耦合,状态管理复杂 | 页面独立,状态隔离 |
+| Widget Key | 易冲突,需要全局唯一 | 页面级隔离,_page后缀 |
+| 测试性 | 依赖父组件状态 | 可独立测试 |
+| 扩展性 | 难以添加新功能 | 易于扩展和修改 |
+| URL路由 | 不支持 | 易于实现深度链接 |
+
+**文档状态**: 活跃更新中
+**最后更新**: 2025-10-01
 **版本历史**:
-- v1.0 - 初始架构设计 - [日期]
+- v1.0 - 初始架构设计 - 2025-01
+- v1.1 - 添加提醒系统、数据导出、内联编辑架构 - 2025-09-30
+- v1.2 - 独立页面架构升级 - 2025-10-01
+- v1.3 - AI Agent架构增强 (Phase 2) - 2025-10-01
+
+---
+
+## 11. AI Agent架构增强 (Phase 2 - 2025-10-01)
+
+### 11.1 多Agent系统架构
+
+#### 11.1.1 Agent层次结构
+
+```
+ButlerAgent (管家Agent - 中央协调者)
+    ├── MonitoringAgent (监控Agent)
+    │   ├── 订阅扫描
+    │   ├── 异常检测
+    │   └── 续费提醒
+    │
+    ├── OptimizationAgent (优化Agent) ✨ 新增
+    │   ├── 成本分析
+    │   ├── 省钱机会检测
+    │   └── 订阅组合优化
+    │
+    └── Future Agents
+        ├── NegotiationAgent (谈判Agent - 规划中)
+        └── RecommendationAgent (推荐Agent - 规划中)
+```
+
+#### 11.1.2 OptimizationAgent 架构
+
+**文件**: `core/agents/optimization_agent.py`
+
+```python
+class OptimizationAgent(BaseAgent):
+    """优化Agent - 分析和优化订阅组合"""
+
+    async def analyze_costs(self, context: AgentContext) -> Dict[str, Any]:
+        """
+        成本分析功能
+        - 总月度支出计算
+        - 分类成本分布
+        - 付费周期分析
+        - 平均订阅成本
+        """
+        pass
+
+    async def find_savings_opportunities(self, context: AgentContext) -> Dict[str, Any]:
+        """
+        省钱机会检测
+        - 重复服务检测
+        - 未使用订阅识别
+        - 年付优惠分析 (月付→年付转换)
+        - 预算超支警告
+        - 高成本订阅标记
+        """
+        pass
+
+    async def optimize_subscription_portfolio(self, context: AgentContext) -> Dict[str, Any]:
+        """
+        订阅组合优化
+        - 基于使用模式的优化建议
+        - 替代方案推荐
+        - 成本效益分析
+        """
+        pass
+```
+
+**关键设计点**:
+- 独立的分析引擎，不依赖外部AI服务
+- 基于规则和算法的优化逻辑
+- 可扩展的优化策略框架
+
+### 11.2 Agent活动日志系统
+
+#### 11.2.1 活动日志架构
+
+**文件**: `core/agents/activity_logger.py`
+
+```python
+class ActivityType(Enum):
+    """活动类型枚举"""
+    TASK_STARTED = "task_started"
+    TASK_COMPLETED = "task_completed"
+    TASK_FAILED = "task_failed"
+    MESSAGE_SENT = "message_sent"
+    MESSAGE_RECEIVED = "message_received"
+    DECISION_MADE = "decision_made"
+    ACTION_TAKEN = "action_taken"
+    ERROR_OCCURRED = "error_occurred"
+
+class AgentActivityLogger:
+    """全局活动日志记录器"""
+
+    def log_activity(
+        self,
+        agent_id: str,
+        agent_type: str,
+        activity_type: ActivityType,
+        description: str,
+        details: Optional[Dict[str, Any]] = None,
+        user_id: Optional[str] = None,
+        status: str = "success"
+    ) -> str:
+        """记录Agent活动"""
+        pass
+
+    def get_activities(
+        self,
+        agent_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        activity_type: Optional[ActivityType] = None,
+        start_time: Optional[datetime] = None,
+        limit: int = 100
+    ) -> List[AgentActivity]:
+        """查询活动记录"""
+        pass
+
+    def get_activity_stats(
+        self,
+        user_id: Optional[str] = None,
+        time_window: timedelta = timedelta(days=7)
+    ) -> Dict[str, Any]:
+        """获取活动统计"""
+        pass
+```
+
+#### 11.2.2 BaseAgent集成
+
+**文件**: `core/agents/base_agent.py`
+
+```python
+class BaseAgent(ABC):
+    def __init__(self, agent_id: str, agent_type: AgentType):
+        self.agent_id = agent_id
+        self.agent_type = agent_type
+        self.logger = logging.getLogger(f"agent.{agent_id}")
+        self._current_user_id: Optional[str] = None  # 用于活动日志记录
+
+    def log_action(self, action: str, details: Dict[str, Any], status: str = "success"):
+        """
+        记录Agent动作
+        - 同时记录到Python logger
+        - 同时记录到活动日志系统
+        """
+        # Python日志
+        self.logger.info(f"Action: {action}", extra=details)
+
+        # 活动日志系统
+        activity_logger.log_activity(
+            agent_id=self.agent_id,
+            agent_type=self.agent_type.value,
+            activity_type=ActivityType.ACTION_TAKEN,
+            description=action,
+            details=details,
+            user_id=self._current_user_id,
+            status=status
+        )
+```
+
+### 11.3 每日检查调度系统
+
+#### 11.3.1 调度器架构
+
+**文件**: `core/services/daily_checkup_scheduler.py`
+
+```python
+class DailyCheckupScheduler:
+    """每日检查调度器 - 基于schedule库"""
+
+    def __init__(self):
+        self.butler_agent = ButlerAgent()
+        self.is_running = False
+        self.last_run_time: Optional[datetime] = None
+        self.last_results: Dict[str, Any] = {}
+
+    async def run_daily_checkup_for_user(self, user_id: str) -> Dict[str, Any]:
+        """为指定用户运行每日检查"""
+        # 获取用户订阅
+        # 创建Agent上下文
+        # 调用ButlerAgent执行daily_checkup任务
+        pass
+
+    def schedule_daily_checkup(self, time_str: str = "09:00"):
+        """调度每日检查任务"""
+        schedule.every().day.at(time_str).do(job)
+
+    def start_scheduler(self, time_str: str = "09:00"):
+        """启动调度器 (后台线程)"""
+        self.is_running = True
+        while self.is_running:
+            schedule.run_pending()
+            time.sleep(60)
+```
+
+#### 11.3.2 UI集成
+
+**文件**: `ui/pages/automation_settings_page.py`
+
+**配置界面**:
+```python
+# 每日检查设置
+enable_auto_checkup = st.checkbox("启用每日自动检查")
+checkup_time = st.time_input("检查时间", value="09:00")
+
+# 调度器状态显示
+scheduler_status = daily_checkup_scheduler.get_status()
+st.metric("调度器状态", "运行中" if scheduler_status["is_running"] else "已停止")
+st.metric("上次检查", last_run_time)
+st.metric("下次检查", next_run_time)
+
+# 手动触发
+if st.button("▶️ 立即执行检查"):
+    result = asyncio.run(
+        daily_checkup_scheduler.run_daily_checkup_for_user(user_id)
+    )
+    st.session_state.daily_checkup_result = result
+```
+
+### 11.4 AI洞察仪表板
+
+#### 11.4.1 页面架构
+
+**文件**: `ui/pages/ai_insights_page.py`
+
+**功能模块**:
+1. **监控扫描** - MonitoringAgent
+   - 扫描所有订阅
+   - 检测异常和问题
+   - 生成问题列表
+
+2. **成本分析** - OptimizationAgent ✨ 新增
+   - 月度总支出
+   - 分类成本分布
+   - 付费周期分析
+   - 成本趋势
+
+3. **省钱建议** - OptimizationAgent ✨ 新增
+   - 重复服务检测
+   - 年付优惠机会
+   - 未使用订阅识别
+   - 按优先级排序
+
+4. **每日检查结果**
+   - 显示调度器执行的检查结果
+   - 行动项建议
+
+**数据流**:
+```
+用户点击按钮
+    ↓
+创建AgentContext
+    ↓
+调用Agent异步方法
+    ↓
+结果存入session_state
+    ↓
+UI重新渲染显示结果
+```
+
+### 11.5 Agent活动日志页面
+
+**文件**: `ui/pages/agent_activity_page.py`
+
+**功能**:
+- 时间范围筛选 (1小时/24小时/7天/30天/全部)
+- Agent类型筛选
+- 活动类型筛选
+- 状态筛选 (success/failed/pending)
+- 活动统计概览
+- Agent活动分布可视化
+- 最近错误列表
+- 日志导出 (JSON格式)
+- 旧日志清理
+
+### 11.6 架构优势
+
+**Phase 2增强的价值**:
+
+| 维度 | Phase 1 | Phase 2 |
+|-----|---------|---------|
+| Agent能力 | 监控+对话 | +优化分析 |
+| 可观测性 | Python日志 | +活动日志系统+UI查看器 |
+| 自动化 | 手动触发 | +定时调度+后台运行 |
+| 成本洞察 | 基础统计 | +深度分析+省钱建议 |
+| 用户价值 | 管理订阅 | +主动优化+智能建议 |
+
+**技术创新点**:
+1. **多Agent协作**: ButlerAgent协调多个专业Agent
+2. **活动追踪**: 完整的Agent行为可观测性
+3. **后台调度**: 异步任务定时执行
+4. **智能优化**: 基于规则的成本优化引擎
+
+### 11.7 编码问题修复
+
+**Windows GBK编码兼容性**:
+
+**问题**: Streamlit在Windows下使用GBK编码，¥符号导致`UnicodeEncodeError`
+
+**解决方案**:
+```bash
+# 启动命令使用UTF-8环境变量
+set PYTHONIOENCODING=utf-8 && streamlit run app/main.py --server.port=8501
+```
+
+**影响**:
+- 所有包含Unicode字符的输出正常显示
+- 支持中文、¥、€等多语言字符
+- 跨平台兼容性提升
+
+**文档更新**: 2025-10-01
+**Phase**: Phase 2 完成
+**版本**: v1.3
 
 ---
 

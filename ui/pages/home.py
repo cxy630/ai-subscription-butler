@@ -1,11 +1,12 @@
 """
 首页组件 - 欢迎页面和快速操作
+(Redesigned: Savings War Room)
 """
 
 import streamlit as st
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import asyncio
 
 # 添加项目根目录到路径
@@ -14,302 +15,164 @@ sys.path.insert(0, str(project_root))
 
 from core.database.data_interface import data_manager
 from core.ai import get_ai_assistant, is_ai_assistant_available
+from core.agents.optimization_agent import OptimizationAgent
+from core.agents.base_agent import AgentContext
 from app.constants import CATEGORY_ICONS
+from ui.components.activity_stream import render_recent_activity_stream
 
-def render_welcome_section():
-    """渲染欢迎区域"""
-    st.title("🏠 欢迎使用AI订阅管家")
-
-    if st.session_state.current_user:
-        user_name = st.session_state.current_user.get("name", "用户")
-        current_hour = datetime.now().hour
-
-        # 根据时间显示不同问候语
-        if 5 <= current_hour < 12:
-            greeting = "🌅 早上好"
-        elif 12 <= current_hour < 18:
-            greeting = "☀️ 下午好"
-        else:
-            greeting = "🌙 晚上好"
-
-        st.markdown(f"## {greeting}, {user_name}!")
-        st.markdown("**让我们一起管理您的订阅服务，节省时间和金钱。**")
-
-    else:
-        st.markdown("## 👋 欢迎！")
-        st.markdown("**AI驱动的智能订阅管理助手**")
-
-def render_quick_overview():
-    """渲染快速概览"""
+def render_hero_section():
+    """
+    渲染顶部 'Hero Section'
+    核心目标：展示 AI 带来的财务价值（省钱金额）
+    """
     if not st.session_state.current_user_id:
         return
 
-    user_overview = data_manager.get_user_overview(st.session_state.current_user_id)
-    if not user_overview:
-        return
-
-    st.subheader("📊 今日概览")
-
-    # 主要指标
-    col1, col2, col3 = st.columns(3)
-
+    # 获取实时节省数据
+    user_id = st.session_state.current_user_id
+    subscriptions = data_manager.get_active_subscriptions(user_id)
+    
+    # 临时计算节省潜力（如果不通过 Agent 走全流程，就用快速估算）
+    # 这里我们复用 Agent 逻辑来获取真实数据
+    opt_agent = OptimizationAgent()
+    context = AgentContext(
+        user_id=user_id,
+        subscriptions=subscriptions,
+        user_preferences={},
+        automation_level="manual"
+    )
+    
+    # 异步获取结果
+    try:
+        results = asyncio.run(opt_agent.find_savings_opportunities(context))
+        potential_savings = results.get("total_savings_potential", 0)
+        opportunities_count = results.get("opportunities_count", 0)
+    except Exception as e:
+        potential_savings = 0
+        opportunities_count = 0
+    
+    # 布局：左侧大数字，右侧状态
+    col1, col2 = st.columns([2, 1])
+    
     with col1:
-        st.info(f"""
-        **📱 活跃订阅**
-        **{user_overview['active_subscriptions']}** 个服务
-        总共 {user_overview['total_subscriptions']} 个订阅
-        """)
+        st.markdown("### 💰 本月潜在节省")
+        if potential_savings > 0:
+            st.markdown(f"""
+            <h1 style='color: #2ecc71; font-size: 3.5rem; margin-top: -20px;'>
+                ¥{potential_savings:.2f}
+            </h1>
+            """, unsafe_allow_html=True)
+            st.caption(f"🚀 AI 发现了 {opportunities_count} 个可优化项，建议立即行动。")
+        else:
+            st.markdown(f"""
+            <h1 style='color: #3498db; font-size: 3.5rem; margin-top: -20px;'>
+                ¥0.00
+            </h1>
+            """, unsafe_allow_html=True)
+            st.caption("✨ 您的订阅组合非常健康，暂无明显浪费。")
 
     with col2:
-        monthly_spending = user_overview['monthly_spending']
-        yearly_estimate = monthly_spending * 12
-        st.success(f"""
-        **💰 月度支出**
-        **¥{monthly_spending:.2f}**
-        年度估算: ¥{yearly_estimate:.2f}
-        """)
+        st.info("🤖 **AI 管家状态**")
+        st.markdown("**🟢 实时监控中**")
+        st.markdown(f"上次扫描: {datetime.now().strftime('%H:%M')}")
+        st.markdown(f"活跃订阅: {len(subscriptions)} 个")
 
-    with col3:
-        categories_count = len(user_overview.get('subscription_categories', {}))
-        st.warning(f"""
-        **📂 服务类别**
-        **{categories_count}** 个不同类别
-        多样化的订阅组合
-        """)
-
-def render_recent_activity():
-    """渲染最近活动"""
+def render_action_center():
+    """
+    渲染 '行动中心'
+    直接展示 Top 3 谈判/省钱建议，提供快速入口
+    """
     if not st.session_state.current_user_id:
         return
 
-    st.subheader("📈 最近活动")
+    st.subheader("🔥 待处理建议 (Action Center)")
+    
+    # 获取建议
+    user_id = st.session_state.current_user_id
+    subscriptions = data_manager.get_active_subscriptions(user_id)
+    opt_agent = OptimizationAgent()
+    context = AgentContext(user_id=user_id, subscriptions=subscriptions, user_preferences={})
+    
+    try:
+        results = asyncio.run(opt_agent.find_savings_opportunities(context))
+        opportunities = results.get("opportunities", [])
+    except:
+        opportunities = []
 
-    # 获取最近的订阅
-    subscriptions = data_manager.get_user_subscriptions(st.session_state.current_user_id)
-    if not subscriptions:
-        st.info("暂无订阅记录")
+    if not opportunities:
+        st.success("🎉 目前没有紧急行动项，您可以去喝杯咖啡了！")
         return
 
-    # 按创建时间排序，获取最近的3个
-    recent_subs = sorted(subscriptions, key=lambda x: x.get('created_at', ''), reverse=True)[:3]
-
-    for sub in recent_subs:
+    # 展示 Top 3
+    for opp in opportunities[:3]:
         with st.container():
-            col1, col2, col3 = st.columns([1, 3, 2])
-
-            with col1:
-                category = sub.get('category', 'other')
-                icon = CATEGORY_ICONS.get(category, '📦')
-                st.markdown(f"## {icon}")
-
-            with col2:
-                service_name = sub.get('service_name', '未知服务')
-                price = sub.get('price', 0)
-                status = sub.get('status', 'active')
-
-                st.markdown(f"**{service_name}**")
-                st.caption(f"¥{price}/月 • {status}")
-
-            with col3:
-                created_at = sub.get('created_at', '')
-                if created_at:
-                    try:
-                        # 解析创建时间
-                        created_date = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-                        days_ago = (datetime.now() - created_date.replace(tzinfo=None)).days
-                        if days_ago == 0:
-                            time_str = "今天"
-                        elif days_ago == 1:
-                            time_str = "昨天"
-                        else:
-                            time_str = f"{days_ago}天前"
-                        st.caption(f"添加于 {time_str}")
-                    except:
-                        st.caption("最近添加")
-
+            col_icon, col_info, col_action = st.columns([0.5, 3, 1])
+            
+            with col_icon:
+                st.markdown("## 💡")
+            
+            with col_info:
+                st.markdown(f"**{opp.get('description', '省钱机会')}**")
+                st.caption(f"可节省: ¥{opp.get('savings_potential', 0):.2f}/月 | 优先级: {opp.get('severity', 'normal')}")
+                
+            with col_action:
+                # 直接跳转到谈判页面的逻辑
+                sub_id = opp.get("subscription_id")
+                if sub_id:
+                    if st.button("🤝 解决", key=f"home_solve_{sub_id}"):
+                        st.session_state.current_page = "AI洞察"
+                        st.session_state.negotiation_sub_id = sub_id
+                        st.rerun()
+            
             st.divider()
+    
+    if len(opportunities) > 3:
+        if st.button("查看全部建议", use_container_width=True):
+            st.session_state.current_page = "AI洞察"
+            st.rerun()
 
-def render_quick_actions():
-    """渲染快速操作"""
-    st.subheader("⚡ 快速操作")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        if st.button("➕ 添加新订阅", use_container_width=True, type="primary"):
+def render_quick_entry_points():
+    """
+    渲染快速功能入口（一行图标）
+    """
+    cols = st.columns(4)
+    with cols[0]:
+        if st.button("➕ 记一笔", use_container_width=True):
             st.session_state.show_add_subscription = True
             st.rerun()
-
-        if st.button("📊 查看详细分析", use_container_width=True):
-            st.session_state.current_page = "分析报告"
-            st.rerun()
-
-    with col2:
-        if st.button("🤖 咨询AI助手", use_container_width=True):
-            st.session_state.current_page = "AI助手"
-            st.rerun()
-
-        if st.button("📱 扫描账单", use_container_width=True):
+    with cols[1]:
+        if st.button("📱 扫账单", use_container_width=True):
             st.session_state.show_bill_scanner = True
             st.rerun()
-
-    with col3:
-        if st.button("🔍 搜索订阅", use_container_width=True):
-            st.session_state.current_page = "数据概览"
+    with cols[2]:
+        if st.button("📊 看报表", use_container_width=True):
+            st.session_state.current_page = "分析报告"
             st.rerun()
-
-        if st.button("⚙️ 系统设置", use_container_width=True):
+    with cols[3]:
+        if st.button("⚙️ 设置", use_container_width=True):
             st.session_state.current_page = "设置"
             st.rerun()
 
-def render_insights_preview():
-    """渲染智能洞察预览"""
-    if not st.session_state.current_user_id:
-        return
-
-    st.subheader("💡 智能洞察")
-
-    user_overview = data_manager.get_user_overview(st.session_state.current_user_id)
-    if not user_overview:
-        return
-
-    # 尝试使用AI生成洞察
-    insights = []
-    ai_generated = False
-
-    if is_ai_assistant_available():
-        try:
-            with st.spinner("🤖 AI正在分析您的订阅数据..."):
-                ai_assistant = get_ai_assistant()
-                # 同步调用（在Streamlit中更稳定）
-                insights = asyncio.run(ai_assistant.generate_insights(user_overview))
-                ai_generated = True
-        except Exception as e:
-            st.caption(f"AI分析暂时不可用，使用默认分析: {str(e)}")
-
-    # 如果AI不可用或失败，使用默认洞察
-    if not insights:
-        insights = generate_default_insights(user_overview)
-
-    # 显示洞察来源
-    if ai_generated:
-        st.caption("🤖 以下洞察由AI智能分析生成")
-    else:
-        st.caption("📊 基于规则分析生成")
-
-    # 显示洞察
-    if insights:
-        for insight in insights[:3]:  # 只显示前3个洞察
-            icon = insight.get("icon", "💡")
-            title = insight.get("title", "洞察")
-            content = insight.get("content", "")
-
-            insight_type = insight.get("type", "info")
-            if insight_type == "warning":
-                st.warning(f"{icon} **{title}**\n\n{content}")
-            elif insight_type == "success":
-                st.success(f"{icon} **{title}**\n\n{content}")
-            else:
-                st.info(f"{icon} **{title}**\n\n{content}")
-
-        if len(insights) > 3:
-            st.caption(f"还有{len(insights) - 3}个洞察，点击'分析报告'查看更多")
-    else:
-        st.success("✅ **订阅结构良好**\n\n您的订阅管理情况很不错，继续保持定期评估的习惯！")
-
-def generate_default_insights(user_overview):
-    """生成默认洞察（当AI不可用时使用）"""
-    insights = []
-
-    subscriptions = user_overview.get('subscriptions', [])
-    monthly_spending = user_overview.get('monthly_spending', 0)
-    categories = user_overview.get('subscription_categories', {})
-
-    # 支出分析
-    if monthly_spending > 200:
-        insights.append({
-            "type": "warning",
-            "icon": "⚠️",
-            "title": "支出较高提醒",
-            "content": f"您的月度订阅支出为¥{monthly_spending:.2f}，建议定期评估各服务的使用频率。"
-        })
-
-    # 订阅数量分析
-    if len(subscriptions) > 5:
-        insights.append({
-            "type": "info",
-            "icon": "📱",
-            "title": "订阅数量提醒",
-            "content": f"您有{len(subscriptions)}个活跃订阅，可以考虑整合相似功能的服务。"
-        })
-
-    # 娱乐支出分析
-    entertainment_cost = categories.get('entertainment', {}).get('spending', 0)
-    if entertainment_cost > 50:
-        insights.append({
-            "type": "info",
-            "icon": "🎬",
-            "title": "娱乐支出分析",
-            "content": f"娱乐类支出¥{entertainment_cost:.2f}/月，可以考虑选择性保留最常用的服务。"
-        })
-
-    return insights
-
-def render_tips_section():
-    """渲染使用技巧"""
-    with st.expander("💡 使用技巧", expanded=False):
-        st.markdown("""
-        **🎯 如何更好地使用AI订阅管家：**
-
-        1. **📱 定期添加订阅**
-           - 每次新订阅服务时及时记录
-           - 使用扫描账单功能快速添加
-
-        2. **🤖 善用AI助手**
-           - 询问具体的支出情况
-           - 获取个性化的节省建议
-
-        3. **📊 关注数据分析**
-           - 定期查看分析报告
-           - 关注支出趋势变化
-
-        4. **🔄 定期清理**
-           - 每月评估订阅使用情况
-           - 及时取消不需要的服务
-
-        5. **🎯 设置预算目标**
-           - 为不同类别设置支出预算
-           - 使用提醒功能避免超支
-        """)
-
 def render_home_page():
-    """渲染完整的首页"""
-    # 欢迎区域
-    render_welcome_section()
-
+    """渲染完整的首页 (Savings War Room 版)"""
+    
+    # 1. 顶部：省钱大数字
+    render_hero_section()
+    
     st.divider()
-
-    # 快速概览
-    render_quick_overview()
-
+    
+    # 2. 中部：快速行动建议
+    render_action_center()
+    
     st.divider()
-
-    # 智能洞察
-    render_insights_preview()
-
+    
+    # 3. 功能入口
+    render_quick_entry_points()
+    
     st.divider()
-
-    # 快速操作
-    render_quick_actions()
-
-    st.divider()
-
-    # 最近活动
-    render_recent_activity()
-
-    # 使用技巧
-    render_tips_section()
+    
+    # 4. 底部：AI 实时工作流（增强活跃感）
+    render_recent_activity_stream(limit=3)
 
 if __name__ == "__main__":
-    # 测试组件
     render_home_page()

@@ -1,9 +1,44 @@
 [
   {
-    "id": "12912be5-89d7-45fc-a43b-19c807a44e3c",
+    "id": "d2389f2e-4276-46d2-8843-c7d63602315a",
     "email": "demo@example.com",
     "name": "Demo User",
-    "created_at": "2025-09-26T15:37:48.259073",
-    "subscription_tier": "free"
+    "created_at": "2025-09-29T16:28:19.296531",
+    "subscription_tier": "free",
+    "notification_preferences": {
+      "enabled": true,
+      "reminder_days": [
+        7,
+        3,
+        1
+      ],
+      "notification_time": "09:00",
+      "channels": {
+        "email": true,
+        "in_app": true,
+        "push": false
+      },
+      "notify_on_renewal": true,
+      "notify_on_price_change": true,
+      "weekly_summary": true,
+      "summary_day": "monday"
+    },
+    "automation_preferences": {
+      "automation_level": "semi_auto",
+      "budget_limit": 500.0,
+      "enabled_rules": [
+        "budget_warning",
+        "renewal_reminder",
+        "price_increase_alert"
+      ],
+      "auto_pause_unused": false,
+      "unused_days_threshold": 30,
+      "require_approval_for": [
+        "cancel",
+        "pause",
+        "downgrade"
+      ]
+    },
+    "updated_at": "2025-10-01T19:35:04.478867"
   }
 ]

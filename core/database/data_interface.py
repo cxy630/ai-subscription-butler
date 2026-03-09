@@ -34,6 +34,11 @@ class DataInterface(ABC):
         pass
 
     @abstractmethod
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        """更新用户信息"""
+        pass
+
+    @abstractmethod
     def create_subscription(self, user_id: str, subscription_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """创建订阅"""
         pass
@@ -96,6 +101,9 @@ class JSONDataInterface(DataInterface):
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         return self.data_manager.users.get_user_by_id(user_id)
 
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        return self.data_manager.users.update_user(user_id, updates)
+
     def create_subscription(self, user_id: str, subscription_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return self.data_manager.subscriptions.create_subscription(user_id, subscription_data)
 
@@ -145,6 +153,9 @@ class SQLiteDataInterface(DataInterface):
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         user = self.sqlite_manager.get_user_by_id(user_id)
         return user.to_dict() if user else None
+
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        return self.sqlite_manager.update_user(user_id, updates)
 
     def create_subscription(self, user_id: str, subscription_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         subscription = self.sqlite_manager.create_subscription(user_id, subscription_data)
@@ -213,6 +224,9 @@ class DataManager:
 
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         return self._interface.get_user_by_id(user_id)
+
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        return self._interface.update_user(user_id, updates)
 
     def create_subscription(self, user_id: str, subscription_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return self._interface.create_subscription(user_id, subscription_data)

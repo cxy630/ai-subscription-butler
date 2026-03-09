@@ -16,7 +16,45 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from core.database.data_interface import data_manager
+from core.services.daily_checkup_scheduler import daily_checkup_scheduler
 from app.constants import CATEGORY_COLORS, CATEGORY_ICONS
+
+def render_weekly_ai_report():
+    """渲染AI周报摘要"""
+    st.subheader("🤖 AI 管家周度洞察")
+    
+    # 获取缓存的周报
+    report = st.session_state.get("last_weekly_report")
+    
+    if report and report.get("status") == "success":
+        with st.container():
+            st.info(f"📅 **报告日期**: {datetime.fromisoformat(report['report_date']).strftime('%Y-%m-%d')}")
+            st.markdown(f"### 💡 管家本周总结")
+            st.write(report.get("summary", "本周订阅状态平稳。"))
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("活跃订阅", f"{report['stats']['active_count']} 个")
+            with col2:
+                st.metric("月度开支(CNY)", f"¥{report['stats']['estimated_monthly_cost']:.2f}")
+    else:
+        st.info("💡 尚未生成本周报告。点击下方按钮，让AI管家为您进行深度分析。")
+        if st.button("🚀 立即生成AI周报", use_container_width=True):
+            with st.spinner("AI管家正在梳理账单并撰写报告..."):
+                import asyncio
+                result = asyncio.run(
+                    daily_checkup_scheduler.run_weekly_report_for_user(
+                        st.session_state.current_user_id
+                    )
+                )
+                if result.get("status") == "success":
+                    st.session_state.last_weekly_report = result
+                    st.rerun()
+                else:
+                    st.error(f"❌ 生成失败: {result.get('error', '未知错误')}")
+    
+    st.divider()
+
 
 def render_spending_trends():
     """渲染支出趋势分析"""
@@ -365,7 +403,10 @@ def render_analytics_page():
         st.warning("请先选择用户")
         return
 
-    # 渲染各个分析模块
+    # 1. 优先展示AI周报摘要
+    render_weekly_ai_report()
+
+    # 2. 渲染各个分析模块
     render_spending_trends()
 
     st.divider()
