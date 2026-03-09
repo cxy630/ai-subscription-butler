@@ -41,10 +41,15 @@ An AI-powered subscription management assistant that helps users discover, manag
   - JSON export for data portability
 
 - **🧠 Advanced AI Agents (v2.0)**: Proactive subscription management
-  - **Negotiation Agent**: Personalized price negotiation strategies and message drafting
   - **Optimization Agent**: Automated detection of duplicate services and annual billing savings
+  - **Smart Rules Engine**: Configurable automation rules with enable/disable toggles
+    - Renewal reminders, unused subscription detection
+    - Price increase alerts, budget warnings
+    - Redundant category detection, annual savings suggestions
+  - **Price Monitor**: Real-time historical price tracking and hike detection
   - **Savings War Room**: Value-oriented home page with real-time AI activity logs
   - **Weekly AI Reports**: Automated weekly consumption insights and summaries
+  - **Monthly Optimization Insights**: AI-generated monthly spending health reports
 
 ## 🛠️ Tech Stack
 
@@ -53,7 +58,7 @@ An AI-powered subscription management assistant that helps users discover, manag
 - **AI/ML**:
   - Google Gemini 2.5 Flash Lite (Chat & OCR)
   - Multi-modal AI for text and image processing
-- **Database**: JSON file storage (development), PostgreSQL (planned for production)
+- **Database**: JSON file storage (development), SQLite (ready), PostgreSQL (planned for production)
 - **Deployment**: Streamlit Cloud / Docker
 
 ## 📦 Installation
@@ -113,35 +118,50 @@ ai-subscription-butler/
 ├── core/                  # Core business logic
 │   ├── ai/               # AI integration
 │   │   ├── assistant.py  # AI assistant orchestration
-│   │   └── gemini_client.py  # Gemini API client
-│   ├── agents/           # [NEW] AI Agent Framework
-│   │   ├── butler_agent.py   # Central coordinator
-│   │   ├── rules_engine.py   # Automated logic engine
-│   │   ├── negotiation_agent.py # Negotiation specialist
-│   │   └── activity_logger.py # Audit and transparency
+│   │   ├── gemini_client.py  # Gemini API client
+│   │   └── subscription_extractor.py  # Subscription data extraction
+│   ├── agents/           # AI Agent Framework
+│   │   ├── butler_agent.py   # Central coordinator (daily/weekly/monthly)
+│   │   ├── rules_engine.py   # Smart automation rules engine
+│   │   ├── optimization_agent.py # Savings optimizer
+│   │   ├── monitoring_agent.py   # Subscription monitor
+│   │   ├── negotiation_agent.py  # Negotiation specialist
+│   │   └── activity_logger.py    # Audit and transparency
 │   ├── database/         # Data persistence
-│   │   ├── json_storage.py  # JSON file storage
-│   │   └── data_interface.py  # Data access layer
+│   │   ├── json_storage.py    # JSON file storage
+│   │   ├── sqlite_models.py   # SQLite ORM models
+│   │   └── data_interface.py  # Unified data access layer
 │   ├── services/         # Business services
 │   │   ├── reminder_system.py # Billing reminder logic
+│   │   ├── price_monitor.py   # Historical price tracking
 │   │   └── daily_checkup_scheduler.py # Automated task runner
-│   └── utils/            # Utility functions
+│   └── templates/        # Subscription templates
 ├── ui/                   # User interface components
 │   ├── pages/            # Page-level components
+│   │   ├── home.py               # Savings War Room
+│   │   ├── analytics_page.py     # Spending analytics
+│   │   ├── ai_insights_page.py   # AI insights dashboard
+│   │   ├── automation_settings_page.py # Rule management UI
+│   │   └── agent_activity_page.py     # Agent activity logs
 │   └── components/       # Reusable UI components
-│       ├── activity_stream.py # [NEW] Live AI feed
+│       ├── activity_stream.py # Live AI feed
 │       ├── dashboard.py  # Main dashboard with analytics
 │       ├── chat.py      # AI chat interface
 │       ├── reminders.py # Reminder notifications
-│       └── ocr.py      # Bill OCR interface
-├── tests/               # Test suite
+│       └── settings.py  # Settings components
+├── tests/               # Test suite (33 tests)
+│   ├── test_json_storage.py
+│   ├── test_openai_client.py
+│   └── unit/agents/test_rules_engine.py
+├── scripts/             # Utility scripts
+│   ├── fix_categories.py          # Batch category updates
+│   └── migrate_json_to_sqlite.py  # DB migration tool
 ├── docs/               # Documentation
-├── scripts/           # Utility scripts
-│   └── fix_categories.py  # Batch category updates
-└── data/             # JSON data storage
+└── data/               # Data storage
     ├── subscriptions.json
     ├── users.json
-    └── conversations.json
+    ├── conversations.json
+    └── price_history.json
 ```
 
 ## 📚 Documentation
@@ -237,23 +257,28 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ Analytics dashboard with spending trends
 - ✅ Intelligent reminder system with priority notifications
 - ✅ Data export (CSV, JSON)
-- ✅ **Negotiation Agent**: Automated price negotiation strategies
-- ✅ **Rule Engine**: Duplicate detection and annual savings logic
-- ✅ **Savings War Room**: Redesigned value-centric home page
-- ✅ **Automated Weekly Reports**: AI-generated consumption summaries
 - ✅ Inline editing with accordion UI
 - ✅ Category-based organization
+- ✅ **Rule Engine**: Duplicate detection, annual savings, price alerts, budget warnings
+- ✅ **Savings War Room**: Redesigned value-centric home page
+- ✅ **Smart Rules Engine**: Configurable rules with UI toggles and execution logging
+- ✅ **Price Monitor**: Historical subscription price tracking and hike detection
+- ✅ **Weekly AI Reports**: Automated consumption summaries with real price data
+- ✅ **Monthly Optimization Insights**: AI-generated monthly spending health reports
+- ✅ **SQLite Backend**: Full ORM models and migration script ready
+- ✅ **33 Unit Tests**: Comprehensive test coverage across core modules
 
 ### In Progress 🔄
+- 🔄 Database migration (JSON → SQLite/PostgreSQL)
 - 🔄 Email/SMS notification integration
 - 🔄 Batch operations for subscriptions
-- 🔄 Notification preferences and settings
 
 ### Planned 📅
+- 📅 Negotiation Agent enhancement
+- 📅 Multi-channel push notifications (ServerChan / DingTalk / Email)
 - 📅 Data backup and restore
 - 📅 Multi-user support and family sharing
 - 📅 Mobile responsive design
-- 📅 Budget tracking and alerts
 - 📅 Subscription recommendations
 
 ## 🏆 Success Metrics
@@ -267,4 +292,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ using Claude Code**
 
-*Last updated: 2025-09-30*
+*Last updated: 2026-03-09*
