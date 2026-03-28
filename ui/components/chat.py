@@ -578,7 +578,7 @@ def render_chat_interface():
             st.rerun()
 
     with col4:
-        if st.button("⚙️ 设置", use_container_width=True):
+        if st.button("⚙️ 设置", use_container_width=True, key="chat_settings"):
             st.session_state.show_chat_settings = not st.session_state.get("show_chat_settings", False)
             st.rerun()
 

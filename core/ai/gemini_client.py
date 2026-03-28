@@ -74,7 +74,7 @@ class GeminiClient:
         genai.configure(api_key=self.api_key)
 
         # 模型配置
-        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-3.0-flash")
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         self.max_message_length = 2000
         self.max_context_length = 8000
 

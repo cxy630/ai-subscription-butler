@@ -127,7 +127,7 @@ def render_action_center():
             st.divider()
     
     if len(opportunities) > 3:
-        if st.button("查看全部建议", use_container_width=True):
+        if st.button("查看全部建议", use_container_width=True, key="home_view_all_suggestions"):
             st.session_state.current_page = "AI洞察"
             st.rerun()
 
@@ -137,19 +137,19 @@ def render_quick_entry_points():
     """
     cols = st.columns(4)
     with cols[0]:
-        if st.button("➕ 记一笔", use_container_width=True):
+        if st.button("➕ 记一笔", use_container_width=True, key="home_quick_add"):
             st.session_state.show_add_subscription = True
             st.rerun()
     with cols[1]:
-        if st.button("📱 扫账单", use_container_width=True):
+        if st.button("📱 扫账单", use_container_width=True, key="home_quick_scan"):
             st.session_state.show_bill_scanner = True
             st.rerun()
     with cols[2]:
-        if st.button("📊 看报表", use_container_width=True):
+        if st.button("📊 看报表", use_container_width=True, key="home_quick_analytics"):
             st.session_state.current_page = "分析报告"
             st.rerun()
     with cols[3]:
-        if st.button("⚙️ 设置", use_container_width=True):
+        if st.button("⚙️ 设置", use_container_width=True, key="home_quick_settings"):
             st.session_state.current_page = "设置"
             st.rerun()
 
