@@ -11,6 +11,7 @@ from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 import uuid
 import json
+import os
 
 Base = declarative_base()
 
@@ -54,7 +55,8 @@ class Subscription(Base):
     currency = Column(String(3), default='CNY')
     billing_cycle = Column(String(20), nullable=False)  # daily, weekly, monthly, yearly
     category = Column(String(50), index=True)
-    next_billing_date = Column(String(10))  # 存储为字符串格式 YYYY-MM-DD
+    start_date = Column(String(30))           # 订阅开始日期
+    next_billing_date = Column(String(10))    # 存储为字符串格式 YYYY-MM-DD
     status = Column(String(20), default='active', index=True)  # active, cancelled, paused
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
@@ -70,6 +72,7 @@ class Subscription(Base):
             'currency': self.currency,
             'billing_cycle': self.billing_cycle,
             'category': self.category,
+            'start_date': self.start_date,
             'next_billing_date': self.next_billing_date,
             'status': self.status,
             'notes': self.notes,
@@ -145,12 +148,30 @@ class OCRRecord(Base):
         }
 
 
+# Subscription 模型允许的字段集合（防止 create_subscription 传入未知字段）
+_SUBSCRIPTION_FIELDS = {
+    'service_name', 'price', 'currency', 'billing_cycle', 'category',
+    'start_date', 'next_billing_date', 'status', 'notes'
+}
+
+
 class SQLiteDataManager:
     """SQLite数据管理器"""
 
-    def __init__(self, database_url: str = "sqlite:///data/subscriptions.db"):
+    def __init__(self, database_url: str = None):
+        if database_url is None:
+            # 根据项目根目录构建路径
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            db_path = os.path.join(project_root, 'data', 'subscriptions.db')
+            database_url = f"sqlite:///{db_path}"
+
         self.engine = create_engine(database_url, echo=False)
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.SessionLocal = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=self.engine,
+            expire_on_commit=False  # 防止 commit 后对象属性过期
+        )
 
         # 创建表
         Base.metadata.create_all(bind=self.engine)
@@ -163,12 +184,12 @@ class SQLiteDataManager:
     def create_user(self, email: str, password_hash: str, name: str = None) -> Optional[User]:
         """创建用户"""
         with self.get_session() as db:
-            # 检查邮箱是否已存在
             existing_user = db.query(User).filter(User.email == email).first()
             if existing_user:
                 return None
 
             user = User(
+                id=str(uuid.uuid4()),
                 email=email,
                 password_hash=password_hash,
                 name=name
@@ -189,13 +210,32 @@ class SQLiteDataManager:
         with self.get_session() as db:
             return db.query(User).filter(User.id == user_id).first()
 
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        """更新用户信息"""
+        with self.get_session() as db:
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+
+            for key, value in updates.items():
+                if hasattr(user, key):
+                    setattr(user, key, value)
+
+            user.updated_at = datetime.utcnow()
+            db.commit()
+            return True
+
     # 订阅相关操作
     def create_subscription(self, user_id: str, subscription_data: Dict[str, Any]) -> Optional[Subscription]:
         """创建订阅"""
         with self.get_session() as db:
+            # 只保留模型支持的字段
+            filtered_data = {k: v for k, v in subscription_data.items() if k in _SUBSCRIPTION_FIELDS}
+
             subscription = Subscription(
+                id=str(uuid.uuid4()),
                 user_id=user_id,
-                **subscription_data
+                **filtered_data
             )
 
             db.add(subscription)
@@ -248,6 +288,7 @@ class SQLiteDataManager:
         """保存对话记录"""
         with self.get_session() as db:
             conversation = Conversation(
+                id=str(uuid.uuid4()),
                 user_id=user_id,
                 session_id=session_id,
                 message=message,
@@ -286,7 +327,6 @@ class SQLiteDataManager:
             price = sub.price or 0
             cycle = sub.billing_cycle or "monthly"
 
-            # 标准化为月度成本
             if cycle == "monthly":
                 monthly_price = price
             elif cycle == "yearly":
@@ -300,7 +340,6 @@ class SQLiteDataManager:
 
             monthly_spending += monthly_price
 
-            # 分类统计
             category = sub.category or "other"
             if category not in category_breakdown:
                 category_breakdown[category] = {"count": 0, "spending": 0}
@@ -323,7 +362,7 @@ class SQLiteDataManager:
             query_lower = f"%{query.lower()}%"
             return db.query(Subscription).filter(
                 Subscription.user_id == user_id,
-                db.func.lower(Subscription.service_name).like(query_lower)
+                func.lower(Subscription.service_name).like(query_lower)
             ).all()
 
 
@@ -333,7 +372,6 @@ sqlite_manager = SQLiteDataManager()
 
 def init_sqlite_sample_data():
     """初始化SQLite示例数据"""
-    # 创建示例用户
     user = sqlite_manager.create_user(
         email="demo@example.com",
         password_hash="$2b$12$sample_hash",
@@ -341,12 +379,10 @@ def init_sqlite_sample_data():
     )
 
     if not user:
-        # 用户已存在，获取现有用户
         user = sqlite_manager.get_user_by_email("demo@example.com")
 
     user_id = user.id
 
-    # 创建示例订阅
     sample_subscriptions = [
         {
             "service_name": "Netflix",
@@ -387,7 +423,6 @@ def init_sqlite_sample_data():
     ]
 
     for sub_data in sample_subscriptions:
-        # 检查是否已存在相同订阅
         existing = sqlite_manager.get_user_subscriptions(user_id)
         exists = any(sub.service_name == sub_data["service_name"] for sub in existing)
 
@@ -399,10 +434,8 @@ def init_sqlite_sample_data():
 
 
 if __name__ == "__main__":
-    # 测试SQLite数据存储
     print("初始化SQLite数据存储...")
     user_id = init_sqlite_sample_data()
 
-    # 测试查询
     overview = sqlite_manager.get_user_overview(user_id)
     print(f"用户概览: {overview}")

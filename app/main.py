@@ -128,7 +128,7 @@ def render_sidebar():
 
         # 系统信息
         st.divider()
-        st.caption("💡 使用JSON文件存储")
+        st.caption("💡 使用SQLite数据库")
         st.caption("🔄 支持实时数据同步")
 
 def render_main_content():
@@ -540,7 +540,7 @@ def main():
         with col1:
             st.caption("🤖 基于Claude Code构建")
         with col2:
-            st.caption("💾 JSON文件存储")
+            st.caption("💾 SQLite数据库")
         with col3:
             st.caption("🔄 实时更新")
 

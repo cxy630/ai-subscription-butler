@@ -263,7 +263,7 @@ def get_data_manager(backend: StorageBackend = None) -> DataManager:
     if backend is None:
         # 从配置文件读取默认后端
         from app.config import settings
-        backend_str = getattr(settings, 'storage_backend', 'json').lower()
+        backend_str = getattr(settings, 'data_storage_backend', 'json').lower()
         backend = StorageBackend(backend_str) if backend_str in ['json', 'sqlite'] else StorageBackend.JSON
 
     return DataManager(backend)
