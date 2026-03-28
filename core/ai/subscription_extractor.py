@@ -75,7 +75,7 @@ class SubscriptionExtractor:
     def _is_add_subscription_intent(self, message: str) -> bool:
         """检查是否是添加订阅的意图"""
         add_keywords = [
-            '添加', '新增', '订阅', '加个', '帮我加', '我要订',
+            '添加', '新增', '加个', '帮我加', '我要订',
             '买了', '购买', '入手', '剁手', '开通', '办了',
             '续费', '充值', '付费', '订了', '下单', '入了'
         ]
