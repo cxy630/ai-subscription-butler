@@ -70,6 +70,7 @@ htmlcov/
 
 # Application specific
 data/*.db
+data/*.json
 data/uploads/
 data/exports/
 .streamlit/
