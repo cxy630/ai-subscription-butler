@@ -5,7 +5,7 @@
 ## 🚀 功能特性
 
 ### 核心功能
-- **🤖 对话式 AI 助手**：基于 Google Gemini 2.5 Flash Lite 的自然语言交互
+- **🤖 对话式 AI 助手**：基于 Google Gemini 2.0 Flash 的自然语言交互
   - 多轮对话上下文感知
   - 智能订阅发现与管理
   - 自然语言查询与指令
@@ -56,9 +56,9 @@
 - **后端**：Python 3.9+
 - **前端**：Streamlit
 - **AI/ML**：
-  - Google Gemini 2.5 Flash Lite（对话与 OCR）
+  - Google Gemini 2.0 Flash（对话与 OCR）
   - 多模态 AI 文本与图像处理
-- **数据库**：JSON 文件存储（开发）、SQLite（已就绪）、PostgreSQL（生产计划）
+- **数据库**：SQLite（当前）、PostgreSQL（生产计划）
 - **部署**：Streamlit Cloud / Docker
 
 ## 📦 安装指南
@@ -207,7 +207,7 @@ ai-subscription-butler/
 ```bash
 # Google Gemini 配置
 GEMINI_API_KEY=your-api-key-here
-GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_MODEL=gemini-2.0-flash
 
 # 应用设置
 APP_PORT=8501
@@ -242,7 +242,7 @@ FEATURE_REMINDERS=true
 
 ### 已完成 ✅
 - ✅ 订阅 CRUD 基础管理
-- ✅ AI 对话界面（Gemini 2.5 Flash Lite）
+- ✅ AI 对话界面（Gemini 2.0 Flash）
 - ✅ OCR 账单识别（三步工作流）
 - ✅ 数据分析仪表板（消费趋势）
 - ✅ 智能提醒系统（优先级通知）
@@ -255,11 +255,12 @@ FEATURE_REMINDERS=true
 - ✅ **价格监控**：历史价格追踪与涨价检测
 - ✅ **每周 AI 报告**：基于真实价格数据的自动化消费总结
 - ✅ **月度优化洞察**：AI 生成月度消费健康报告
-- ✅ **SQLite 后端**：完整 ORM 模型与迁移脚本就绪
+- ✅ **SQLite 后端**：完整 ORM 模型与迁移脚本就绪，已作为默认存储
 - ✅ **33 个单元测试**：核心模块全面测试覆盖
+- ✅ **修复 DuplicateWidgetID**：为所有 st.button 添加唯一 key
+- ✅ **新增 schedule 依赖**：自动化调度任务正常运行
 
 ### 进行中 🔄
-- 🔄 数据库迁移（JSON → SQLite/PostgreSQL）
 - 🔄 邮件/短信通知集成
 - 🔄 批量操作优化
 
@@ -282,4 +283,4 @@ FEATURE_REMINDERS=true
 
 **用 ❤️ 构建**
 
-*最后更新：2026-03-09*
+*最后更新：2026-03-28*

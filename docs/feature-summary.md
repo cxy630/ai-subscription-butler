@@ -1,6 +1,6 @@
 # AI订阅管家 - 功能总结文档
 
-> 📅 更新日期：2026-03-09
+> 📅 更新日期：2026-03-28
 > 📝 版本：Phase 3 核心完成
 
 ---
@@ -161,7 +161,7 @@ ai-subscription-butler/
 ### 2. 🤖 AI能力
 
 #### 2.1 对话式AI助手
-**技术**: Google Gemini 2.5 Flash Lite
+**技术**: Google Gemini 2.0 Flash
 
 **核心功能**:
 - ✅ **自然语言理解**
@@ -479,7 +479,7 @@ backups/
 - **Python 3.9+**
 - **Streamlit**: Web框架
 - **Google Gemini API**: AI能力
-  - gemini-2.5-flash-lite: 对话和分析
+  - gemini-2.0-flash: 对话和分析
   - gemini-vision: OCR识别
 
 ### 前端
@@ -633,6 +633,11 @@ backups/
 
 ## 📝 开发日志
 
+### 2026-03-28 (Bug 修复)
+- ✅ 修复 DuplicateWidgetID：home.py 和 chat.py 中的 st.button 添加唯一 key
+- ✅ 修正默认 Gemini 模型名（gemini-3.0-flash → gemini-2.0-flash）
+- ✅ 新增 schedule 依赖至 requirements.txt
+
 ### 2026-03-09 (Phase 3 核心完成)
 - ✅ 智能规则引擎增强 (6条自动化规则 + 执行日志)
 - ✅ 价格监控服务 (历史价格追踪与涨价检测)
@@ -699,4 +704,4 @@ MIT License - 详见 [LICENSE](../LICENSE)
 
 **Built with ❤️ using Claude Code**
 
-*最后更新: 2026-03-09*
+*最后更新: 2026-03-28*
