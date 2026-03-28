@@ -31,11 +31,12 @@ class User(Base):
     subscription_tier = Column(String(20), default='free')  # free, premium, enterprise
 
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
+        """转换为字典（包含 password_hash 供认证使用）"""
         return {
             'id': self.id,
             'email': self.email,
             'name': self.name,
+            'password_hash': self.password_hash,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_active': self.is_active,

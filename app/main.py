@@ -43,6 +43,7 @@ try:
     from ui.pages.automation_settings_page import render_automation_settings_page
     from ui.pages.ai_insights_page import render_ai_insights_page
     from ui.pages.agent_activity_page import render_agent_activity_page
+    from ui.pages.auth_page import render_auth_page
     from app.constants import SUCCESS_MESSAGES, ERROR_MESSAGES
 except ImportError as e:
     st.error(f"导入错误: {e}")
@@ -51,15 +52,14 @@ except ImportError as e:
 # 初始化会话状态
 def init_session_state():
     """初始化会话状态"""
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
     if "current_user_id" not in st.session_state:
-        # 使用演示用户
-        demo_user = data_manager.get_user_by_email("demo@example.com")
-        if demo_user:
-            st.session_state.current_user_id = demo_user["id"]
-            st.session_state.current_user = demo_user
-        else:
-            st.session_state.current_user_id = None
-            st.session_state.current_user = None
+        st.session_state.current_user_id = None
+
+    if "current_user" not in st.session_state:
+        st.session_state.current_user = None
 
     if "current_page" not in st.session_state:
         st.session_state.current_page = "首页"
@@ -126,8 +126,16 @@ def render_sidebar():
             st.session_state.current_page = "扫描账单"
             st.rerun()
 
-        # 系统信息
+        # 退出登录
         st.divider()
+        if st.button("🚪 退出登录", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.current_user_id = None
+            st.session_state.current_user = None
+            st.session_state.current_page = "首页"
+            st.rerun()
+
+        # 系统信息
         st.caption("💡 使用SQLite数据库")
         st.caption("🔄 支持实时数据同步")
 
@@ -513,10 +521,9 @@ def main():
         # 初始化
         init_session_state()
 
-        # 检查是否有用户
-        if not st.session_state.current_user:
-            st.error("❌ 未找到演示用户，请运行存储演示脚本创建数据")
-            st.code("python scripts/storage_demo.py")
+        # 未登录时显示认证页面
+        if not st.session_state.authenticated or not st.session_state.current_user:
+            render_auth_page()
             st.stop()
 
         # 渲染界面
