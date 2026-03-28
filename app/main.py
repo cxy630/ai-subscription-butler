@@ -12,13 +12,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # 确保环境变量被正确加载
-env_path = project_root / '.env'
-if env_path.exists():
-    with open(env_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            if '=' in line and not line.strip().startswith('#'):
-                key, value = line.strip().split('=', 1)
-                os.environ[key] = value
+from dotenv import load_dotenv
+load_dotenv(project_root / '.env')
 
 # 设置页面配置
 st.set_page_config(
