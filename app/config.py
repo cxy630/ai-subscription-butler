@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     # Gemini
     gemini_api_key: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
-    gemini_model: str = Field(default="gemini-3.0-flash", env="GEMINI_MODEL")
+    gemini_model: str = Field(default="gemini-2.0-flash", env="GEMINI_MODEL")
     gemini_max_tokens: int = Field(default=1000, env="GEMINI_MAX_TOKENS")
     gemini_temperature: float = Field(default=0.7, env="GEMINI_TEMPERATURE")
     gemini_request_timeout: int = Field(default=30, env="GEMINI_REQUEST_TIMEOUT")
