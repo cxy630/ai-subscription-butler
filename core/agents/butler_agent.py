@@ -378,10 +378,12 @@ class ButlerAgent(BaseAgent):
         savings_result = await self.optimization_agent.find_savings_opportunities(context)
         savings_opportunities = savings_result.get("opportunities", [])
         
-        # Calculate summary metrics
+        # Calculate summary metrics — convert all billing cycles to monthly equivalent
+        _cycle_to_monthly = {"monthly": 1, "yearly": 1 / 12, "weekly": 52 / 12}
         total_monthly_cny = sum(
-            sub.get("price", 0) for sub in context.subscriptions 
-            if sub.get("status") == "active" and sub.get("billing_cycle") == "monthly"
+            sub.get("price", 0) * _cycle_to_monthly.get(sub.get("billing_cycle", "monthly"), 1)
+            for sub in context.subscriptions
+            if sub.get("status") == "active"
         )
         
         # Draft a monthly review
